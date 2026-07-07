@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIMBARA - Sistem Informasi Manajemen Barang
 
-## Getting Started
+Aplikasi web untuk pengelolaan aset dan barang inventaris berbasis Next.js.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Bahasa**: TypeScript
+- **Database**: PostgreSQL (via Supabase)
+- **ORM**: Prisma
+- **Auth**: Supabase Auth
+- **UI**: shadcn/ui + TailwindCSS v4
+- **Icons**: Lucide React
+
+## Struktur Modul
+
+| Modul       | Deskripsi                              |
+| ----------- | -------------------------------------- |
+| Dashboard   | Ringkasan data & statistik             |
+| Barang      | CRUD data barang inventaris            |
+| Kategori    | Pengelompokan jenis barang             |
+| Ruangan     | Lokasi penempatan barang               |
+| Mutasi      | Perpindahan barang antar ruangan       |
+| Laporan     | Export laporan PDF/Excel               |
+| Pengguna    | Manajemen user & role (khusus Admin)   |
+
+## Prasyarat
+
+- Node.js 18+
+- PostgreSQL (atau Supabase project)
+- npm
+
+## Cara Menjalankan
+
+1. Clone repository dan install dependencies:
+
+```bash
+npm install
+```
+
+2. Salin file environment:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Isi konfigurasi di `.env.local` (DATABASE_URL, Supabase keys)
+
+4. Generate Prisma client:
+
+```bash
+npx prisma generate
+```
+
+5. Jalankan migrasi database:
+
+```bash
+npx prisma migrate dev
+```
+
+6. Jalankan development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Role Pengguna
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role     | Hak Akses                                    |
+| -------- | -------------------------------------------- |
+| ADMIN    | Akses penuh, kelola pengguna                 |
+| OPERATOR | CRUD barang, mutasi, lihat laporan           |
+| VIEWER   | Hanya bisa melihat data                      |
 
-## Learn More
+## Skrip Tersedia
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev       # Development server
+npm run build     # Production build
+npm run start     # Production server
+npm run lint      # Linting
+```

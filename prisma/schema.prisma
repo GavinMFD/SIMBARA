@@ -1,0 +1,128 @@
+// Prisma schema untuk SIMBARA
+// Sistem Informasi Manajemen Barang
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// ENUM
+// ============================================
+
+enum Role {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum KondisiBarang {
+  BAIK
+  KURANG_BAIK
+  RUSAK_BERAT
+  TIDAK_DITEMUKAN
+}
+
+enum StatusMutasi {
+  PENDING
+  DISETUJUI
+  DITOLAK
+}
+
+// ============================================
+// MODEL
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  nama      String
+  role      Role     @default(VIEWER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  mutasiDibuat Mutasi[] @relation("MutasiDibuat")
+
+  @@map("users")
+}
+
+model Kategori {
+  id        String   @id @default(cuid())
+  kode      String   @unique
+  nama      String
+  deskripsi String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  barang Barang[]
+
+  @@map("kategori")
+}
+
+model Ruangan {
+  id        String   @id @default(cuid())
+  kode      String   @unique
+  nama      String
+  lantai    Int?
+  gedung    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  barang     Barang[]
+  mutasiDari Mutasi[] @relation("RuanganAsal")
+  mutasiKe   Mutasi[] @relation("RuanganTujuan")
+
+  @@map("ruangan")
+}
+
+model Barang {
+  id             String        @id @default(cuid())
+  kodeBarang     String        @unique @map("kode_barang")
+  namaBarang     String        @map("nama_barang")
+  merek          String?
+  tahunPerolehan Int?          @map("tahun_perolehan")
+  nilaiPerolehan Float?        @map("nilai_perolehan")
+  kondisi        KondisiBarang @default(BAIK)
+  keterangan     String?
+  jumlah         Int           @default(1)
+
+  kategoriId String   @map("kategori_id")
+  kategori   Kategori @relation(fields: [kategoriId], references: [id])
+
+  ruanganId String  @map("ruangan_id")
+  ruangan   Ruangan @relation(fields: [ruanganId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  mutasi Mutasi[]
+
+  @@map("barang")
+}
+
+model Mutasi {
+  id            String       @id @default(cuid())
+  tanggalMutasi DateTime     @map("tanggal_mutasi")
+  keterangan    String?
+  status        StatusMutasi @default(PENDING)
+
+  barangId String @map("barang_id")
+  barang   Barang @relation(fields: [barangId], references: [id])
+
+  ruanganAsalId   String  @map("ruangan_asal_id")
+  ruanganAsal     Ruangan @relation("RuanganAsal", fields: [ruanganAsalId], references: [id])
+
+  ruanganTujuanId String  @map("ruangan_tujuan_id")
+  ruanganTujuan   Ruangan @relation("RuanganTujuan", fields: [ruanganTujuanId], references: [id])
+
+  dibuatOlehId String @map("dibuat_oleh_id")
+  dibuatOleh   User   @relation("MutasiDibuat", fields: [dibuatOlehId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("mutasi")
+}
