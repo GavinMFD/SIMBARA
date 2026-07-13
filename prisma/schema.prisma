@@ -1,129 +1,255 @@
-// Prisma schema untuk SIMBARA
-// Sistem Informasi Manajemen Barang
+// ============================================================
+// Sistem Informasi Manajemen BMN Terpadu — BPS Kota Palu
+// Prisma Schema — sumber tunggal struktur database (ERD -> kode)
+// Jalankan migrasi otomatis dengan: npx prisma migrate dev --name init
+// ============================================================
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  // Dipakai runtime aplikasi (lewat connection pooler Supabase, port 6543)
+  url       = env("DATABASE_URL")
+  // Dipakai KHUSUS saat `prisma migrate` (koneksi langsung, port 5432)
+  // Wajib diisi untuk Supabase karena pooler (pgbouncer) tidak mendukung migrasi.
+  directUrl = env("DIRECT_URL")
 }
 
-// ============================================
+// ------------------------------------------------------------
 // ENUM
-// ============================================
+// ------------------------------------------------------------
 
 enum Role {
-  ADMIN
-  OPERATOR
-  VIEWER
+  super_admin
+  admin
+  kasubag
 }
 
-enum KondisiBarang {
-  BAIK
-  KURANG_BAIK
-  RUSAK_BERAT
-  TIDAK_DITEMUKAN
+enum KondisiAset {
+  baik
+  rusak_ringan
+  rusak_berat
 }
 
-enum StatusMutasi {
-  PENDING
-  DISETUJUI
-  DITOLAK
+enum StatusAset {
+  aktif
+  non_aktif
 }
 
-// ============================================
-// MODEL
-// ============================================
+enum JenisJabatan {
+  kepala_bps
+  kasubag
+}
+
+// ------------------------------------------------------------
+// 1. AKSES & MASTER DATA UMUM
+// ------------------------------------------------------------
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String   @id @default(uuid())
   nama      String
-  role      Role     @default(VIEWER)
+  email     String   @unique
+  role      Role
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  mutasiDibuat Mutasi[] @relation("MutasiDibuat")
+  batchSuratBelanja  BatchSuratBelanja[]
+  batchPembelianAset BatchPembelianAset[]
+  mutasiAset         MutasiAset[]
+  riwayatKondisiAset RiwayatKondisiAset[]
 
   @@map("users")
 }
 
-model Kategori {
-  id        String   @id @default(cuid())
-  kode      String   @unique
-  nama      String
-  deskripsi String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  barang Barang[]
-
-  @@map("kategori")
-}
-
 model Ruangan {
-  id        String   @id @default(cuid())
-  kode      String   @unique
-  nama      String
-  lantai    Int?
-  gedung    String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  kodeRuangan   String   @unique @map("kode_ruangan")
+  namaRuangan   String   @map("nama_ruangan")
+  lantaiLokasi  String?  @map("lantai_lokasi")
+  keterangan    String?
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  barang     Barang[]
-  mutasiDari Mutasi[] @relation("RuanganAsal")
-  mutasiKe   Mutasi[] @relation("RuanganTujuan")
+  // Lokasi terkini aset (1 ruangan -> banyak aset)
+  masterAset MasterAset[] @relation("RuanganSaatIni")
+
+  // Dua relasi berbeda ke mutasi_aset: sebagai ruangan asal & ruangan tujuan
+  mutasiAsalDari    MutasiAset[] @relation("RuanganAsal")
+  mutasiTujuanKe    MutasiAset[] @relation("RuanganTujuan")
 
   @@map("ruangan")
 }
 
-model Barang {
-  id             String        @id @default(cuid())
-  kodeBarang     String        @unique @map("kode_barang")
-  namaBarang     String        @map("nama_barang")
-  merek          String?
-  tahunPerolehan Int?          @map("tahun_perolehan")
-  nilaiPerolehan Float?        @map("nilai_perolehan")
-  kondisi        KondisiBarang @default(BAIK)
-  keterangan     String?
-  jumlah         Int           @default(1)
+model PengaturanTtd {
+  id            String       @id @default(uuid())
+  jenisJabatan  JenisJabatan @map("jenis_jabatan")
+  namaPejabat   String       @map("nama_pejabat")
+  nip           String
+  jabatan       String
+  isActive      Boolean      @default(true) @map("is_active")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  kategoriId String   @map("kategori_id")
-  kategori   Kategori @relation(fields: [kategoriId], references: [id])
-
-  ruanganId String  @map("ruangan_id")
-  ruangan   Ruangan @relation(fields: [ruanganId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  mutasi Mutasi[]
-
-  @@map("barang")
+  @@map("pengaturan_ttd")
 }
 
-model Mutasi {
-  id            String       @id @default(cuid())
-  tanggalMutasi DateTime     @map("tanggal_mutasi")
-  keterangan    String?
-  status        StatusMutasi @default(PENDING)
+// ------------------------------------------------------------
+// 2. MODUL PERSEDIAAN (ATK) — FIFO
+// ------------------------------------------------------------
 
-  barangId String @map("barang_id")
-  barang   Barang @relation(fields: [barangId], references: [id])
+model KategoriBarang {
+  id           String @id @default(uuid())
+  namaKategori String @map("nama_kategori")
 
-  ruanganAsalId   String  @map("ruangan_asal_id")
-  ruanganAsal     Ruangan @relation("RuanganAsal", fields: [ruanganAsalId], references: [id])
+  masterBarang MasterBarang[]
 
-  ruanganTujuanId String  @map("ruangan_tujuan_id")
-  ruanganTujuan   Ruangan @relation("RuanganTujuan", fields: [ruanganTujuanId], references: [id])
+  @@map("kategori_barang")
+}
 
-  dibuatOlehId String @map("dibuat_oleh_id")
-  dibuatOleh   User   @relation("MutasiDibuat", fields: [dibuatOlehId], references: [id])
+model MasterBarang {
+  id               String   @id @default(uuid())
+  kategoriBarangId String   @map("kategori_barang_id")
+  namaBarang       String   @map("nama_barang")
+  satuan           String
+  stokMinimum      Int      @map("stok_minimum")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  kategori          KategoriBarang      @relation(fields: [kategoriBarangId], references: [id])
+  batchSuratBelanja BatchSuratBelanja[]
+  transaksiAtk      TransaksiAtk[]
 
-  @@map("mutasi")
+  @@map("master_barang")
+}
+
+model BatchSuratBelanja {
+  id              String   @id @default(uuid())
+  masterBarangId  String   @map("master_barang_id")
+  noSuratBelanja  String   @map("no_surat_belanja")
+  tanggalBelanja  DateTime @map("tanggal_belanja") @db.Date
+  hargaSatuan     Decimal  @map("harga_satuan") @db.Decimal(14, 2)
+  qtyMasuk        Int      @map("qty_masuk")
+  sisaQty         Int      @map("sisa_qty")
+  dicatatOleh     String   @map("dicatat_oleh")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  masterBarang       MasterBarang         @relation(fields: [masterBarangId], references: [id])
+  pencatat           User                 @relation(fields: [dicatatOleh], references: [id])
+  transaksiAtkDetail TransaksiAtkDetail[]
+
+  @@map("batch_surat_belanja")
+}
+
+model TransaksiAtk {
+  id                 String   @id @default(uuid())
+  masterBarangId     String   @map("master_barang_id")
+  namaPegawai        String   @map("nama_pegawai")
+  unitKerja          String   @map("unit_kerja")
+  qtyDiambil         Int      @map("qty_diambil")
+  tanggalPengambilan DateTime @default(now()) @map("tanggal_pengambilan")
+
+  masterBarang MasterBarang         @relation(fields: [masterBarangId], references: [id])
+  detail       TransaksiAtkDetail[]
+
+  @@map("transaksi_atk")
+}
+
+// Rincian FIFO: 1 transaksi bisa dipenuhi dari lebih dari 1 batch surat belanja
+model TransaksiAtkDetail {
+  id                  String  @id @default(uuid())
+  transaksiAtkId      String  @map("transaksi_atk_id")
+  batchSuratBelanjaId String  @map("batch_surat_belanja_id")
+  qtyDipakai          Int     @map("qty_dipakai")
+  hargaSaatPakai      Decimal @map("harga_saat_pakai") @db.Decimal(14, 2)
+
+  transaksiAtk      TransaksiAtk      @relation(fields: [transaksiAtkId], references: [id])
+  batchSuratBelanja BatchSuratBelanja @relation(fields: [batchSuratBelanjaId], references: [id])
+
+  @@map("transaksi_atk_detail")
+}
+
+// ------------------------------------------------------------
+// 3. MODUL ASET TETAP (NUP)
+// ------------------------------------------------------------
+
+model KategoriAset {
+  id           String @id @default(uuid())
+  namaKategori String @map("nama_kategori")
+
+  batchPembelianAset BatchPembelianAset[]
+
+  @@map("kategori_aset")
+}
+
+model BatchPembelianAset {
+  id             String   @id @default(uuid())
+  kategoriAsetId String   @map("kategori_aset_id")
+  noSuratBelanja String   @map("no_surat_belanja")
+  tanggalBeli    DateTime @map("tanggal_beli") @db.Date
+  namaAset       String   @map("nama_aset")
+  merekTipe      String?  @map("merek_tipe")
+  hargaSatuan    Decimal  @map("harga_satuan") @db.Decimal(14, 2)
+  jumlahUnit     Int      @map("jumlah_unit")
+  dicatatOleh    String   @map("dicatat_oleh")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  kategori   KategoriAset @relation(fields: [kategoriAsetId], references: [id])
+  pencatat   User         @relation(fields: [dicatatOleh], references: [id])
+  masterAset MasterAset[]
+
+  @@map("batch_pembelian_aset")
+}
+
+model MasterAset {
+  id                String      @id @default(uuid())
+  batchPembelianId  String      @map("batch_pembelian_id")
+  nup               String      @unique
+  ruanganId         String      @map("ruangan_id")
+  kondisi           KondisiAset @default(baik)
+  statusAset        StatusAset  @default(aktif) @map("status_aset")
+  createdAt         DateTime    @default(now()) @map("created_at")
+
+  batchPembelian     BatchPembelianAset  @relation(fields: [batchPembelianId], references: [id])
+  ruangan            Ruangan             @relation("RuanganSaatIni", fields: [ruanganId], references: [id])
+  mutasiAset         MutasiAset[]
+  riwayatKondisiAset RiwayatKondisiAset[]
+
+  @@map("master_aset")
+}
+
+// Riwayat mutasi ruangan — append-only, jangan pernah di-update/delete
+model MutasiAset {
+  id               String   @id @default(uuid())
+  asetId           String   @map("aset_id")
+  ruanganAsalId    String   @map("ruangan_asal_id")
+  ruanganTujuanId  String   @map("ruangan_tujuan_id")
+  tanggalMutasi    DateTime @map("tanggal_mutasi") @db.Date
+  keterangan       String?
+  dicatatOleh      String   @map("dicatat_oleh")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  aset          MasterAset @relation(fields: [asetId], references: [id])
+  ruanganAsal   Ruangan    @relation("RuanganAsal", fields: [ruanganAsalId], references: [id])
+  ruanganTujuan Ruangan    @relation("RuanganTujuan", fields: [ruanganTujuanId], references: [id])
+  pencatat      User       @relation(fields: [dicatatOleh], references: [id])
+
+  @@map("mutasi_aset")
+}
+
+// Riwayat perubahan kondisi fisik — append-only, jangan pernah di-update/delete
+model RiwayatKondisiAset {
+  id                String      @id @default(uuid())
+  asetId            String      @map("aset_id")
+  kondisiLama       KondisiAset @map("kondisi_lama")
+  kondisiBaru       KondisiAset @map("kondisi_baru")
+  tanggalPerubahan  DateTime    @map("tanggal_perubahan") @db.Date
+  keterangan        String?
+  dicatatOleh       String      @map("dicatat_oleh")
+  createdAt         DateTime    @default(now()) @map("created_at")
+
+  aset     MasterAset @relation(fields: [asetId], references: [id])
+  pencatat User       @relation(fields: [dicatatOleh], references: [id])
+
+  @@map("riwayat_kondisi_aset")
 }
