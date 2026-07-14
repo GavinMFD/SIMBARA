@@ -1,6 +1,11 @@
 "use client";
 
+import { useActionState } from "react";
+import { login } from "./actions";
+
 export default function LoginPage() {
+  const [state, formAction, isPending] = useActionState(login, null);
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
       <div className="mb-8 text-center">
@@ -10,7 +15,13 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form className="space-y-4">
+      <form action={formAction} className="space-y-4">
+        {state?.error && (
+          <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
+            {state.error}
+          </div>
+        )}
+
         {/* Email */}
         <div>
           <label
@@ -23,6 +34,7 @@ export default function LoginPage() {
             id="email"
             name="email"
             type="email"
+            required
             placeholder="nama@bps.go.id"
             className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
@@ -40,6 +52,7 @@ export default function LoginPage() {
             id="password"
             name="password"
             type="password"
+            required
             placeholder="••••••••"
             className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
@@ -48,9 +61,10 @@ export default function LoginPage() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+          disabled={isPending}
+          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
         >
-          Masuk
+          {isPending ? "Memproses..." : "Masuk"}
         </button>
       </form>
     </div>
