@@ -11,22 +11,19 @@ export async function GET(request: NextRequest) {
 
     const where = search
       ? {
-          OR: [
-            { namaBarang: { contains: search, mode: "insensitive" as const } },
-            { kodeBarang: { contains: search, mode: "insensitive" as const } },
-          ],
+          namaBarang: { contains: search, mode: "insensitive" as const },
         }
       : {};
 
     const [barang, total] = await Promise.all([
-      prisma.barang.findMany({
+      prisma.masterBarang.findMany({
         where,
-        include: { kategori: true, ruangan: true },
+        include: { kategori: true },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.barang.count({ where }),
+      prisma.masterBarang.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -49,9 +46,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const barang = await prisma.barang.create({
+    const barang = await prisma.masterBarang.create({
       data: body,
-      include: { kategori: true, ruangan: true },
+      include: { kategori: true },
     });
 
     return NextResponse.json({ success: true, data: barang }, { status: 201 });

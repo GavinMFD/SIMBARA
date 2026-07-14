@@ -9,18 +9,18 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
 
     const [mutasi, total] = await Promise.all([
-      prisma.mutasi.findMany({
+      prisma.mutasiAset.findMany({
         include: {
-          barang: true,
+          aset: true,
           ruanganAsal: true,
           ruanganTujuan: true,
-          dibuatOleh: true,
+          pencatat: true,
         },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.mutasi.count(),
+      prisma.mutasiAset.count(),
     ]);
 
     return NextResponse.json({
@@ -43,16 +43,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const mutasi = await prisma.mutasi.create({
-      data: {
-        ...body,
-        tanggalMutasi: new Date(body.tanggalMutasi),
-      },
+    
+    // Map legacy body fields if any
+    const data = {
+      ...body,
+      tanggalMutasi: new Date(body.tanggalMutasi),
+    };
+    if (body.barangId && !data.asetId) data.asetId = body.barangId;
+    if (body.dibuatOlehId && !data.dicatatOleh) data.dicatatOleh = body.dibuatOlehId;
+
+    const mutasi = await prisma.mutasiAset.create({
+      data,
       include: {
-        barang: true,
+        aset: true,
         ruanganAsal: true,
         ruanganTujuan: true,
-        dibuatOleh: true,
+        pencatat: true,
       },
     });
 

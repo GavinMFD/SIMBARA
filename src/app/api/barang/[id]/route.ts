@@ -8,9 +8,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const barang = await prisma.barang.findUnique({
+    const barang = await prisma.masterBarang.findUnique({
       where: { id },
-      include: { kategori: true, ruangan: true, mutasi: true },
+      include: { kategori: true },
     });
 
     if (!barang) {
@@ -37,10 +37,10 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const barang = await prisma.barang.update({
+    const barang = await prisma.masterBarang.update({
       where: { id },
       data: body,
-      include: { kategori: true, ruangan: true },
+      include: { kategori: true },
     });
 
     return NextResponse.json({ success: true, data: barang });
@@ -59,7 +59,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await prisma.barang.delete({ where: { id } });
+    await prisma.masterBarang.delete({ where: { id } });
 
     return NextResponse.json({
       success: true,

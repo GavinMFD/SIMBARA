@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,72 +13,185 @@ import {
   Users,
   ChevronLeft,
   Menu,
+  Settings,
+  Plus,
+  LogOut,
 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { logout } from "@/app/(auth)/login/actions";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Barang", href: "/barang", icon: Package },
+  { name: "Asset Inventory", href: "/barang", icon: Package },
   { name: "Kategori", href: "/kategori", icon: Tags },
   { name: "Ruangan", href: "/ruangan", icon: DoorOpen },
-  { name: "Mutasi", href: "/mutasi", icon: ArrowLeftRight },
-  { name: "Laporan", href: "/laporan", icon: FileBarChart2 },
+  { name: "Movement Tracking", href: "/mutasi", icon: ArrowLeftRight },
+  { name: "Reports", href: "/laporan", icon: FileBarChart2 },
   { name: "Pengguna", href: "/pengguna", icon: Users },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ user }: { user?: any }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const handleLogout = () => {
+    startTransition(() => {
+      logout();
+    });
+  };
 
   return (
     <aside
-      className={`flex h-screen flex-col border-r border-slate-200 bg-white transition-all duration-300 dark:border-slate-800 dark:bg-slate-950 ${
-        collapsed ? "w-16" : "w-64"
+      className={`flex h-screen flex-col border-r border-border bg-[#041424] text-slate-300 transition-all duration-300 ${
+        collapsed ? "w-20" : "w-64"
       }`}
     >
-      {/* Logo */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-        {!collapsed && (
-          <span className="text-lg font-bold text-slate-900 dark:text-white">
-            SIMBARA
-          </span>
-        )}
+      {/* Logo & Toggle Header */}
+      <div className="flex h-20 items-center justify-between border-b border-border px-4">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-lg shadow-blue-500/20">
+            <Package className="h-5 w-5" />
+          </div>
+          {!collapsed && (
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-white tracking-wider leading-none">
+                SIMBARA
+              </span>
+              <span className="text-[10px] text-slate-500 font-semibold tracking-widest mt-1">
+                KOTA PALU
+              </span>
+            </div>
+          )}
+        </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+          {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-3">
-        {navigation.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
-              }`}
-              title={item.name}
-            >
-              <item.icon size={20} />
-              {!collapsed && <span>{item.name}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Main Navigation */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <nav className="space-y-1">
+          {navigation.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                  isActive
+                    ? "bg-[#0f2b48] text-white shadow-sm border-l-2 border-blue-500"
+                    : "text-slate-400 hover:bg-[#0b2136] hover:text-slate-200"
+                }`}
+                title={item.name}
+              >
+                <item.icon
+                  size={18}
+                  className={`shrink-0 transition-colors ${
+                    isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-200"
+                  }`}
+                />
+                {!collapsed && <span className="truncate">{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
 
-      {/* Footer */}
-      <div className="border-t border-slate-200 p-3 dark:border-slate-800">
-        {!collapsed && (
-          <p className="text-xs text-slate-400">© 2026 SIMBARA v1.0</p>
+        {/* Preferences Section */}
+        <div className="space-y-2">
+          {!collapsed && (
+            <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+              Preferences
+            </p>
+          )}
+          <nav className="space-y-1">
+            <Link
+              href="/pengaturan"
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                pathname === "/pengaturan"
+                  ? "bg-[#0f2b48] text-white shadow-sm border-l-2 border-blue-500"
+                  : "text-slate-400 hover:bg-[#0b2136] hover:text-slate-200"
+              }`}
+              title="Settings"
+            >
+              <Settings
+                size={18}
+                className={`shrink-0 ${
+                  pathname === "/pengaturan" ? "text-blue-400" : "text-slate-400 group-hover:text-slate-200"
+                }`}
+              />
+              {!collapsed && <span className="truncate">Settings</span>}
+            </Link>
+          </nav>
+        </div>
+
+        {/* Action Button: + New Asset */}
+        <div className="pt-2">
+          <Link
+            href="/barang/tambah"
+            className={`flex items-center justify-center gap-2 rounded-lg bg-[#ff7e47] text-white font-semibold transition-all duration-200 hover:bg-[#e06833] active:scale-95 shadow-md shadow-[#ff7e47]/10 ${
+              collapsed ? "h-10 w-10 rounded-full" : "w-full py-2.5 text-sm"
+            }`}
+            title="Tambah Aset Baru"
+          >
+            <Plus size={18} className="shrink-0" />
+            {!collapsed && <span>New Asset</span>}
+          </Link>
+        </div>
+      </div>
+
+      {/* Footer Profile Block */}
+      <div className="border-t border-border p-3 bg-[#030d1a]/50 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Avatar className="h-9 w-9 shrink-0 border border-slate-700">
+              <AvatarFallback className="bg-blue-600 text-xs font-semibold text-white uppercase">
+                {user?.nama?.substring(0, 2) || "AD"}
+              </AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-semibold text-white truncate capitalize">
+                  {user?.nama || "Alex Morgan"}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium truncate">
+                  {user?.role === 'super_admin' ? 'SUPER ADMIN' : user?.role === 'admin' ? 'ADMIN CONSOLE' : 'KASUBAG'}
+                </span>
+              </div>
+            )}
+          </div>
+          {!collapsed && (
+            <button
+              onClick={handleLogout}
+              disabled={isPending}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-red-950/30 hover:text-red-400 transition-colors shrink-0"
+              title="Keluar Aplikasi"
+            >
+              <LogOut size={16} />
+            </button>
+          )}
+        </div>
+        
+        {!collapsed ? (
+          <div className="flex items-center justify-between text-[10px] text-slate-600 font-semibold px-1 mt-1">
+            <span>ADMIN CONSOLE</span>
+            <span>v1.0.4</span>
+          </div>
+        ) : (
+          <button
+            onClick={handleLogout}
+            disabled={isPending}
+            className="flex items-center justify-center rounded-lg py-1 text-slate-400 hover:text-red-400"
+            title="Keluar"
+          >
+            <LogOut size={16} />
+          </button>
         )}
       </div>
     </aside>
