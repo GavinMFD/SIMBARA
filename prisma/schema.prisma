@@ -10,11 +10,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  // Dipakai runtime aplikasi (lewat connection pooler Supabase, port 6543)
-  url       = env("DATABASE_URL")
-  // Dipakai KHUSUS saat `prisma migrate` (koneksi langsung, port 5432)
-  // Wajib diisi untuk Supabase karena pooler (pgbouncer) tidak mendukung migrasi.
-  directUrl = env("DIRECT_URL")
 }
 
 // ------------------------------------------------------------
