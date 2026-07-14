@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/barang/[id] - Detail barang
+// GET /api/barang/[id] - Detail barang (MasterAset)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const barang = await prisma.barang.findUnique({
+    const barang = await prisma.masterAset.findUnique({
       where: { id },
-      include: { kategori: true, ruangan: true, mutasi: true },
+      include: {
+        batchPembelian: { include: { kategori: true } },
+        ruangan: true,
+        mutasiAset: true,
+      },
     });
 
     if (!barang) {
@@ -29,7 +33,7 @@ export async function GET(
   }
 }
 
-// PUT /api/barang/[id] - Update barang
+// PUT /api/barang/[id] - Update barang (MasterAset)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,10 +41,13 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const barang = await prisma.barang.update({
+    const barang = await prisma.masterAset.update({
       where: { id },
       data: body,
-      include: { kategori: true, ruangan: true },
+      include: {
+        batchPembelian: { include: { kategori: true } },
+        ruangan: true,
+      },
     });
 
     return NextResponse.json({ success: true, data: barang });
@@ -52,14 +59,14 @@ export async function PUT(
   }
 }
 
-// DELETE /api/barang/[id] - Hapus barang
+// DELETE /api/barang/[id] - Hapus barang (MasterAset)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    await prisma.barang.delete({ where: { id } });
+    await prisma.masterAset.delete({ where: { id } });
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/mutasi - Ambil daftar mutasi
+// GET /api/mutasi - Ambil daftar mutasi (MutasiAset)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -9,18 +9,18 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
 
     const [mutasi, total] = await Promise.all([
-      prisma.mutasi.findMany({
+      prisma.mutasiAset.findMany({
         include: {
-          barang: true,
+          aset: true,
           ruanganAsal: true,
           ruanganTujuan: true,
-          dibuatOleh: true,
+          pencatat: true,
         },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.mutasi.count(),
+      prisma.mutasiAset.count(),
     ]);
 
     return NextResponse.json({
@@ -39,20 +39,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/mutasi - Tambah mutasi baru
+// POST /api/mutasi - Tambah mutasi baru (MutasiAset)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const mutasi = await prisma.mutasi.create({
+    const mutasi = await prisma.mutasiAset.create({
       data: {
         ...body,
         tanggalMutasi: new Date(body.tanggalMutasi),
       },
       include: {
-        barang: true,
+        aset: true,
         ruanganAsal: true,
         ruanganTujuan: true,
-        dibuatOleh: true,
+        pencatat: true,
       },
     });
 

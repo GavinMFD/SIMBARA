@@ -5,8 +5,8 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const ruangan = await prisma.ruangan.findMany({
-      include: { _count: { select: { barang: true } } },
-      orderBy: { nama: "asc" },
+      include: { _count: { select: { masterAset: true } } },
+      orderBy: { namaRuangan: "asc" },
     });
 
     return NextResponse.json({ success: true, data: ruangan });

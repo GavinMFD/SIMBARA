@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/barang - Ambil daftar barang
+// GET /api/barang - Ambil daftar barang (MasterAset)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -12,21 +12,28 @@ export async function GET(request: NextRequest) {
     const where = search
       ? {
           OR: [
-            { namaBarang: { contains: search, mode: "insensitive" as const } },
-            { kodeBarang: { contains: search, mode: "insensitive" as const } },
+            { nup: { contains: search, mode: "insensitive" as const } },
+            {
+              batchPembelian: {
+                namaAset: { contains: search, mode: "insensitive" as const },
+              },
+            },
           ],
         }
       : {};
 
     const [barang, total] = await Promise.all([
-      prisma.barang.findMany({
+      prisma.masterAset.findMany({
         where,
-        include: { kategori: true, ruangan: true },
+        include: {
+          batchPembelian: { include: { kategori: true } },
+          ruangan: true,
+        },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.barang.count({ where }),
+      prisma.masterAset.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -45,13 +52,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/barang - Tambah barang baru
+// POST /api/barang - Tambah barang baru (MasterAset)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const barang = await prisma.barang.create({
+    const barang = await prisma.masterAset.create({
       data: body,
-      include: { kategori: true, ruangan: true },
+      include: {
+        batchPembelian: { include: { kategori: true } },
+        ruangan: true,
+      },
     });
 
     return NextResponse.json({ success: true, data: barang }, { status: 201 });

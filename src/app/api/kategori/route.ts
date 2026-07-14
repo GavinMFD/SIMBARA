@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/kategori - Ambil daftar kategori
+// GET /api/kategori - Ambil daftar kategori (KategoriAset)
 export async function GET() {
   try {
-    const kategori = await prisma.kategori.findMany({
-      include: { _count: { select: { barang: true } } },
-      orderBy: { nama: "asc" },
+    const kategori = await prisma.kategoriAset.findMany({
+      include: { _count: { select: { batchPembelianAset: true } } },
+      orderBy: { namaKategori: "asc" },
     });
 
     return NextResponse.json({ success: true, data: kategori });
@@ -18,11 +18,11 @@ export async function GET() {
   }
 }
 
-// POST /api/kategori - Tambah kategori baru
+// POST /api/kategori - Tambah kategori baru (KategoriAset)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const kategori = await prisma.kategori.create({ data: body });
+    const kategori = await prisma.kategoriAset.create({ data: body });
 
     return NextResponse.json(
       { success: true, data: kategori },
