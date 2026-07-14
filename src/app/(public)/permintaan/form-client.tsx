@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, Trash2, Calendar, FileText, CheckCircle2, User, Building, Layers } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, CheckCircle2, Search, ChevronDown, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 interface Barang {
   id: string;
@@ -12,7 +12,7 @@ interface Barang {
 }
 
 interface FormClientProps {
-  barangList: Barang[];
+  barangList?: Barang[];
 }
 
 interface SelectedItem {
@@ -29,13 +29,105 @@ const UNIT_KERJA = [
   "Fungsi Neraca Wilayah & Analisis Statistik",
 ];
 
-export default function PermintaanForm({ barangList }: FormClientProps) {
+// Custom Searchable Dropdown Component
+function SearchableDropdown({
+  options,
+  value,
+  onChange,
+  placeholder,
+}: {
+  options: Barang[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedItem = options.find((o) => o.id === value);
+  const filteredOptions = options.filter(
+    (o) =>
+      o.nama.toLowerCase().includes(search.toLowerCase()) && o.stok > 0
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <div
+        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 cursor-pointer flex items-center justify-between transition-all hover:border-blue-400"
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setSearch("");
+        }}
+      >
+        <span className={selectedItem ? "text-slate-900 text-[14px]" : "text-slate-400 text-[14px]"}>
+          {selectedItem ? selectedItem.nama : placeholder}
+        </span>
+        <ChevronDown size={18} className="text-slate-400" />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+          <div className="sticky top-0 p-2 bg-white border-b border-slate-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                placeholder="Ketik untuk mencari barang..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="p-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((item) => (
+                <div
+                  key={item.id}
+                  className="px-3 py-2 hover:bg-slate-50 cursor-pointer rounded-lg text-sm text-slate-700 flex justify-between items-center"
+                  onClick={() => {
+                    onChange(item.id);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span className="font-medium">{item.nama}</span>
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                    Stok: {item.stok} {item.satuan}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-center text-sm text-slate-500">
+                Barang tidak ditemukan atau stok kosong.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function PermintaanForm({ barangList = [] }: FormClientProps) {
   const [namaPegawai, setNamaPegawai] = useState("");
-  const [tanggal, setTanggal] = useState(new Date().toISOString().substring(0, 10));
+  const [tanggal, setTanggal] = useState("");
   const [unitKerja, setUnitKerja] = useState("");
   const [items, setItems] = useState<SelectedItem[]>([{ barangId: "", quantity: 1 }]);
   const [error, setError] = useState("");
-  const [successData, setSuccessData] = useState<any>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleAddItem = () => {
     setItems([...items, { barangId: "", quantity: 1 }]);
@@ -50,7 +142,7 @@ export default function PermintaanForm({ barangList }: FormClientProps) {
   const handleItemChange = (index: number, barangId: string) => {
     const newItems = [...items];
     newItems[index].barangId = barangId;
-    newItems[index].quantity = 1; // reset qty to 1
+    newItems[index].quantity = 1;
     setItems(newItems);
   };
 
@@ -64,25 +156,20 @@ export default function PermintaanForm({ barangList }: FormClientProps) {
     e.preventDefault();
     setError("");
 
-    // Validasi dasar
-    if (!namaPegawai.trim()) {
-      setError("Nama pegawai harus diisi.");
+    if (!namaPegawai.trim() || !tanggal || !unitKerja) {
+      setError("Data pemohon (Nama, Tanggal, Unit Kerja) wajib diisi.");
       return;
     }
-    if (!unitKerja) {
-      setError("Unit kerja harus dipilih.");
-      return;
-    }
+
     if (items.length === 0) {
       setError("Minimal harus memilih satu barang.");
       return;
     }
 
-    // Validasi items
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (!item.barangId) {
-        setError(`Pilihlah barang pada baris ke-${i + 1}.`);
+        setError(`Silakan pilih barang pada baris ke-${i + 1}.`);
         return;
       }
       
@@ -99,245 +186,187 @@ export default function PermintaanForm({ barangList }: FormClientProps) {
       }
     }
 
-    // Simulasi pengiriman data
-    const ticketId = "REQ-" + Math.floor(100000 + Math.random() * 900000);
-    const detailRes = items.map((item) => {
-      const det = barangList.find((b) => b.id === item.barangId)!;
-      return {
-        nama: det.nama,
-        qty: item.quantity,
-        satuan: det.satuan,
-      };
-    });
-
-    setSuccessData({
-      ticketId,
-      namaPegawai,
-      unitKerja,
-      tanggal,
-      items: detailRes,
-    });
+    // Simulate submission
+    setTimeout(() => {
+      setSuccess(true);
+    }, 500);
   };
 
-  if (successData) {
+  if (success) {
     return (
-      <Card className="bg-[#071829] border-border text-slate-300 overflow-hidden shadow-2xl shadow-blue-950/20 max-w-lg mx-auto animate-in fade-in zoom-in duration-300">
-        <div className="bg-emerald-600/10 border-b border-emerald-500/20 p-6 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 mb-3">
-            <CheckCircle2 size={24} />
-          </div>
-          <h2 className="text-xl font-bold text-white leading-tight">Pengajuan Sukses!</h2>
-          <p className="text-xs text-slate-400 mt-1">Barang Anda siap diambil di gudang logistik.</p>
+      <div className="bg-white rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-2xl mx-auto border border-slate-100 text-center animate-in fade-in zoom-in duration-300">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-6">
+          <CheckCircle2 size={32} />
         </div>
-        <CardContent className="p-6 space-y-6">
-          {/* Receipt Info */}
-          <div className="bg-[#030d1a] border border-border/40 rounded-xl p-4 space-y-3 relative font-mono text-xs">
-            <div className="absolute top-0 left-4 right-4 h-px bg-dashed bg-slate-700"></div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">TICKET NO:</span>
-              <span className="text-emerald-400 font-extrabold">{successData.ticketId}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">NAMA:</span>
-              <span className="text-white font-bold">{successData.namaPegawai}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">UNIT KERJA:</span>
-              <span className="text-white font-bold truncate max-w-[180px]">{successData.unitKerja}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">TANGGAL:</span>
-              <span className="text-white font-bold">{successData.tanggal}</span>
-            </div>
-            <div className="border-t border-dashed border-slate-700 my-2 pt-2">
-              <div className="text-[10px] text-slate-500 mb-2 font-bold uppercase">Daftar Barang Belanjaan:</div>
-              <div className="space-y-1.5">
-                {successData.items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between text-slate-300">
-                    <span className="truncate max-w-[200px]">{item.nama}</span>
-                    <span className="text-white font-bold font-sans">{item.qty} {item.satuan}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center space-y-3">
-            <p className="text-xs text-slate-400">
-              Tunjukkan nomor tiket di atas kepada staf gudang logistik BPS Kota Palu untuk serah terima fisik barang.
-            </p>
-            <button
-              onClick={() => {
-                setSuccessData(null);
-                setItems([{ barangId: "", quantity: 1 }]);
-                setNamaPegawai("");
-                setUnitKerja("");
-              }}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg active:scale-95 transition-all w-full"
-            >
-              Ajukan Permintaan Baru
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Permintaan Berhasil Dikirim!</h2>
+        <p className="text-slate-500 mb-8 max-w-md mx-auto">
+          Terima kasih, permintaan Alat Tulis Kantor Anda telah dicatat dan akan segera diproses oleh admin BMN.
+        </p>
+        <button
+          onClick={() => {
+            setSuccess(false);
+            setNamaPegawai("");
+            setTanggal("");
+            setUnitKerja("");
+            setItems([{ barangId: "", quantity: 1 }]);
+          }}
+          className="bg-[#001D3D] hover:bg-[#001D3D]/90 text-white font-medium py-3 px-8 rounded-xl transition-all"
+        >
+          Ajukan Permintaan Lain
+        </button>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-[#071829] border-border shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
-          <FileText size={18} className="text-blue-400" />
-          Formulir Permintaan
-        </CardTitle>
-        <CardDescription className="text-slate-400">
-          Masukkan informasi diri dan pilih barang BMN habis pakai yang diperlukan.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-xs font-semibold text-red-400">
-              {error}
-            </div>
-          )}
-
-          {/* Pegawai Metadata fields */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label htmlFor="namaPegawai" className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-                <User size={14} /> Nama Lengkap Pegawai
-              </label>
-              <input
-                id="namaPegawai"
-                type="text"
-                value={namaPegawai}
-                onChange={(e) => setNamaPegawai(e.target.value)}
-                placeholder="Masukkan nama Anda..."
-                className="w-full px-3.5 py-2.5 bg-[#030d1a] border border-border/80 rounded-lg text-sm text-white focus:border-blue-500 outline-none placeholder:text-slate-600 transition-colors"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="tanggal" className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-                <Calendar size={14} /> Tanggal Pengambilan
-              </label>
-              <input
-                id="tanggal"
-                type="date"
-                value={tanggal}
-                onChange={(e) => setTanggal(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-[#030d1a] border border-border/80 rounded-lg text-sm text-white focus:border-blue-500 outline-none transition-colors"
-                required
-              />
-            </div>
+    <div className="bg-white rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-2xl mx-auto border border-slate-100 relative">
+      <div className="text-center mb-10">
+        <div className="flex justify-center mb-6">
+          <div className="relative h-20 w-full max-w-[160px]">
+            <Image
+              src="/logo-simbara.png"
+              alt="Logo SIMBARA"
+              fill
+              sizes="(max-width: 768px) 160px, 160px"
+              className="object-contain"
+              priority
+            />
           </div>
+        </div>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">
+          Form Pengambilan ATK
+        </h1>
+        <p className="text-slate-500 text-[15px]">
+          Silakan isi data di bawah ini untuk melakukan permintaan pengambilan Alat Tulis Kantor.
+        </p>
+      </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="unitKerja" className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-              <Building size={14} /> Unit Kerja / Fungsi
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
+            {error}
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label htmlFor="namaPegawai" className="block text-sm font-bold text-slate-700">
+              Nama Pegawai <span className="text-red-500">*</span>
             </label>
-            <select
-              id="unitKerja"
-              value={unitKerja}
-              onChange={(e) => setUnitKerja(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-[#030d1a] border border-border/80 rounded-lg text-sm text-white focus:border-blue-500 outline-none transition-colors appearance-none cursor-pointer"
-              required
-            >
-              <option value="" disabled className="text-slate-600">Pilih Unit Kerja Anda...</option>
-              {UNIT_KERJA.map((unit) => (
-                <option key={unit} value={unit} className="bg-[#071829] text-white">
-                  {unit}
-                </option>
-              ))}
-            </select>
+            <input
+              id="namaPegawai"
+              type="text"
+              value={namaPegawai}
+              onChange={(e) => setNamaPegawai(e.target.value)}
+              placeholder="Masukkan nama lengkap Anda"
+              className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none placeholder:text-slate-400 transition-all text-[14px]"
+            />
           </div>
 
-          {/* Dynamic ATK Items Selection list */}
-          <div className="space-y-4 pt-4 border-t border-border/40">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                <Layers size={14} className="text-blue-400" /> Daftar Barang yang Diminta
-              </h3>
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="inline-flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                <Plus size={14} /> Tambah Baris
-              </button>
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="tanggal" className="block text-sm font-bold text-slate-700">
+              Tanggal Pengambilan <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="tanggal"
+              type="date"
+              value={tanggal}
+              onChange={(e) => setTanggal(e.target.value)}
+              className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-[14px]"
+            />
+          </div>
+        </div>
 
-            <div className="space-y-3">
-              {items.map((item, index) => {
-                const selectedDetails = barangList.find((b) => b.id === item.barangId);
-                return (
-                  <div
-                    key={index}
-                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 bg-[#030d1a]/40 border border-border/50 rounded-xl"
-                  >
-                    {/* Item Dropdown */}
-                    <div className="flex-1 min-w-0">
-                      <select
-                        value={item.barangId}
-                        onChange={(e) => handleItemChange(index, e.target.value)}
-                        className="w-full px-3 py-2 bg-[#030d1a] border border-border/80 rounded-lg text-xs text-white focus:border-blue-500 outline-none cursor-pointer"
-                      >
-                        <option value="" disabled>Pilih Barang BMN...</option>
-                        {barangList.map((b) => (
-                          <option key={b.id} value={b.id} className="bg-[#071829]">
-                            {b.nama} (Stok: {b.stok} {b.satuan})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+        <div className="space-y-2">
+          <label htmlFor="unitKerja" className="block text-sm font-bold text-slate-700">
+            Unit/Bidang <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="unitKerja"
+            value={unitKerja}
+            onChange={(e) => setUnitKerja(e.target.value)}
+            className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-[14px] appearance-none cursor-pointer"
+          >
+            <option value="" disabled className="text-slate-400">Pilih Unit/Bidang</option>
+            {UNIT_KERJA.map((unit) => (
+              <option key={unit} value={unit} className="text-slate-900">
+                {unit}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                    {/* Quantity Input & Satuan */}
-                    <div className="flex items-center gap-3 sm:w-44">
-                      <input
-                        type="number"
-                        min="1"
-                        max={selectedDetails ? selectedDetails.stok : undefined}
-                        value={item.quantity}
-                        onChange={(e) => handleQtyChange(index, parseInt(e.target.value) || 0)}
-                        placeholder="Jumlah"
-                        className="w-20 px-3 py-2 bg-[#030d1a] border border-border/80 rounded-lg text-xs text-white focus:border-blue-500 outline-none text-center"
-                        disabled={!item.barangId}
-                      />
-                      <span className="text-xs font-semibold text-slate-500 truncate max-w-[80px]">
-                        {selectedDetails ? selectedDetails.satuan : "satuan"}
-                      </span>
-                    </div>
+        {/* Dynamic ATK Items Selection */}
+        <div className="space-y-4 pt-6 mt-6 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-bold text-slate-700">
+              Daftar Barang <span className="text-red-500">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <Plus size={16} /> Tambah Barang
+            </button>
+          </div>
 
-                    {/* Remove Action Button */}
+          <div className="space-y-3">
+            {items.map((item, index) => {
+              const selectedDetails = barangList.find((b) => b.id === item.barangId);
+              return (
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-1"
+                >
+                  <div className="flex-1">
+                    <SearchableDropdown
+                      options={barangList}
+                      value={item.barangId}
+                      onChange={(val) => handleItemChange(index, val)}
+                      placeholder="Cari & Pilih Barang BMN..."
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max={selectedDetails ? selectedDetails.stok : undefined}
+                      value={item.quantity}
+                      onChange={(e) => handleQtyChange(index, parseInt(e.target.value) || 0)}
+                      placeholder="Qty"
+                      className="w-20 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[14px] text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-center"
+                      disabled={!item.barangId}
+                    />
+                    <span className="text-[13px] font-semibold text-slate-500 w-12 truncate">
+                      {selectedDetails ? selectedDetails.satuan : "satuan"}
+                    </span>
                     {items.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all self-end sm:self-center"
+                        className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         title="Hapus Baris"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Form Actions */}
-          <div className="pt-4 border-t border-border/40">
-            <button
-              type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-lg active:scale-98 shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2"
-            >
-              Kirim Permintaan Barang
-            </button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <div className="pt-6">
+          <button
+            type="submit"
+            className="w-full py-4 bg-[#001D3D] hover:bg-[#001D3D]/90 text-white font-semibold text-[15px] rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#001D3D]/20"
+          >
+            <Send size={18} /> Kirim Permintaan
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
