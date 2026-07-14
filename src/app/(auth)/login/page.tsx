@@ -15,7 +15,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form action={formAction} method="POST" className="space-y-4">
+      <form action={formAction} className="space-y-4">
         {state?.error && (
           <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
             {state.error}
