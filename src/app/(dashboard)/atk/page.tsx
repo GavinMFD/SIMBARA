@@ -156,16 +156,18 @@ export default function RiwayatAtkPage() {
       if (appliedFilter.unitKerja) params.set("unitKerja", appliedFilter.unitKerja);
       if (appliedFilter.startDate) params.set("startDate", appliedFilter.startDate);
       if (appliedFilter.endDate) params.set("endDate", appliedFilter.endDate);
-      params.set("export", "excel");
 
-      const res = await fetch(`/api/transaksi-atk?${params.toString()}`);
+      // Menggunakan endpoint export khusus yang menghasilkan file .xlsx
+      const res = await fetch(`/api/transaksi-atk/export?${params.toString()}`);
+      if (!res.ok) throw new Error("Export gagal");
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       const contentDisp = res.headers.get("Content-Disposition") || "";
       const fileNameMatch = contentDisp.match(/filename="(.+)"/);
-      a.download = fileNameMatch ? fileNameMatch[1] : `riwayat-atk.csv`;
+      a.download = fileNameMatch ? fileNameMatch[1] : `riwayat-atk.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
