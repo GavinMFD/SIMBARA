@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, CheckCircle2, Search, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Send, CheckCircle2, Search, ChevronDown, Plus, Trash2, AlertCircle, X } from "lucide-react";
 import Image from "next/image";
 
 interface Barang {
@@ -140,9 +140,23 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
   const [realtimeStock, setRealtimeStock] = useState<Record<string, number>>({});
   const [isFetchingStock, setIsFetchingStock] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [waktuSubmit, setWaktuSubmit] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+  };
+
+  const dismissToast = () => setToast((t) => ({ ...t, visible: false }));
+
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => dismissToast(), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible, toast.message]);
 
   const handleAddItem = () => {
     setItems([...items, { barangId: "", quantity: 1 }]);
@@ -183,8 +197,11 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
     }
   };
 
-  const handleQtyChange = (index: number, qty: number) => {
+  const handleQtyChange = (index: number, qty: number, maxStock?: number) => {
     const newItems = [...items];
+    if (maxStock !== undefined && qty > maxStock) {
+      qty = maxStock;
+    }
     newItems[index].quantity = qty;
     setItems(newItems);
   };
@@ -246,13 +263,13 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error || "Terjadi kesalahan saat mengirim permintaan.");
+        showToast(json.error || "Terjadi kesalahan saat mengirim permintaan.");
         return;
       }
       setWaktuSubmit(json.waktuSubmit);
       setSuccess(true);
     } catch (err) {
-      setError("Gagal terhubung ke server. Silakan coba lagi.");
+      showToast("Gagal terhubung ke server. Silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -305,6 +322,22 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
 
   return (
     <div className="bg-white rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-2xl mx-auto border border-slate-100 relative">
+      {/* Toast Error Notification */}
+      <div
+        className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+          toast.visible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
+        }`}
+        role="alert"
+        aria-live="assertive"
+      >
+        <div className="flex items-start gap-3 bg-red-600 text-white text-sm font-medium px-5 py-4 rounded-2xl shadow-xl shadow-red-600/30 max-w-md">
+          <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
+          <span className="flex-1">{toast.message}</span>
+          <button onClick={dismissToast} className="ml-2 text-red-200 hover:text-white transition-colors flex-shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+      </div>
       <div className="text-center mb-10">
         <div className="flex justify-center mb-6">
           <div className="relative h-20 w-full max-w-[160px]">
@@ -328,8 +361,9 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
-            {error}
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 flex items-start gap-2">
+            <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -438,13 +472,26 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
                         <input
                           type="number"
                           min={isOutOfStock ? "0" : "1"}
-                          max={stockValue}
+                          max={stockValue ?? undefined}
                           value={item.quantity}
-                          onChange={(e) => handleQtyChange(index, parseInt(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            handleQtyChange(index, val, stockValue);
+                          }}
                           placeholder="Qty"
-                          className={`w-20 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[14px] text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-center ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                          title={stockValue !== undefined ? `Maksimum: ${stockValue}` : undefined}
+                          className={`w-20 px-4 py-3 bg-white border rounded-xl text-[14px] text-slate-900 focus:ring-1 outline-none text-center transition-colors ${
+                            isOutOfStock
+                              ? 'border-slate-200 opacity-50 cursor-not-allowed bg-slate-50'
+                              : stockValue !== undefined && item.quantity > stockValue
+                              ? 'border-red-400 focus:border-red-400 focus:ring-red-300 bg-red-50 text-red-700'
+                              : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
                           disabled={!item.barangId || isOutOfStock}
                         />
+                        {stockValue !== undefined && item.quantity > stockValue && (
+                          <p className="text-[11px] text-red-500 font-medium text-center">Maks. {stockValue}</p>
+                        )}
                       </div>
                       
                       <div className="py-3 flex items-center">
