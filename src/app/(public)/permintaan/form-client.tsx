@@ -141,6 +141,8 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
   const [isFetchingStock, setIsFetchingStock] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [waktuSubmit, setWaktuSubmit] = useState<string | null>(null);
 
   const handleAddItem = () => {
     setItems([...items, { barangId: "", quantity: 1 }]);
@@ -163,7 +165,7 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
     // Fetch real-time stock
     setIsFetchingStock((prev) => ({ ...prev, [barangId]: true }));
     try {
-      const res = await fetch(`/api/barang/${barangId}`);
+      const res = await fetch(`/api/atk/${barangId}`);
       const json = await res.json();
       if (json.success) {
         setRealtimeStock((prev) => ({ ...prev, [barangId]: json.data.stok }));
@@ -187,7 +189,7 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
     setItems(newItems);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -229,29 +231,69 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
       }
     }
 
-    // Simulate submission
-    setTimeout(() => {
+    // Submit ke API
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/transaksi-atk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          namaPegawai,
+          unitKerja,
+          tanggal,
+          items: items.map((item) => ({ barangId: item.barangId, quantity: item.quantity })),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "Terjadi kesalahan saat mengirim permintaan.");
+        return;
+      }
+      setWaktuSubmit(json.waktuSubmit);
       setSuccess(true);
-    }, 500);
+    } catch (err) {
+      setError("Gagal terhubung ke server. Silakan coba lagi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (success) {
+    const formattedTime = waktuSubmit
+      ? new Date(waktuSubmit).toLocaleString("id-ID", {
+          dateStyle: "long",
+          timeStyle: "short",
+          timeZone: "Asia/Makassar",
+        })
+      : "-";
+
     return (
       <div className="bg-white rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-2xl mx-auto border border-slate-100 text-center animate-in fade-in zoom-in duration-300">
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-6">
           <CheckCircle2 size={32} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Permintaan Berhasil Dikirim!</h2>
-        <p className="text-slate-500 mb-8 max-w-md mx-auto">
-          Terima kasih, permintaan Alat Tulis Kantor Anda telah dicatat dan akan segera diproses oleh admin BMN.
-        </p>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-6 text-left space-y-2">
+          <p className="text-emerald-800 font-semibold text-sm flex items-center gap-2">
+            <CheckCircle2 size={16} />
+            Barang siap diambil di gudang / admin ATK
+          </p>
+          <p className="text-slate-500 text-sm">
+            Waktu submit: <span className="font-medium text-slate-700">{formattedTime}</span>
+          </p>
+          <p className="text-slate-500 text-sm">
+            Tunjukkan konfirmasi ini kepada petugas gudang untuk mengambil barang Anda.
+          </p>
+        </div>
         <button
           onClick={() => {
             setSuccess(false);
+            setWaktuSubmit(null);
             setNamaPegawai("");
             setTanggal("");
             setUnitKerja("");
             setItems([{ barangId: "", quantity: 1 }]);
+            setRealtimeStock({});
           }}
           className="bg-[#001D3D] hover:bg-[#001D3D]/90 text-white font-medium py-3 px-8 rounded-xl transition-all"
         >
@@ -432,9 +474,20 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
         <div className="pt-6">
           <button
             type="submit"
-            className="w-full py-4 bg-[#001D3D] hover:bg-[#001D3D]/90 text-white font-semibold text-[15px] rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#001D3D]/20"
+            disabled={isSubmitting}
+            className="w-full py-4 bg-[#001D3D] hover:bg-[#001D3D]/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-[15px] rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#001D3D]/20"
           >
-            <Send size={18} /> Kirim Permintaan
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                Mengirim...
+              </>
+            ) : (
+              <><Send size={18} /> Kirim Permintaan</>
+            )}
           </button>
         </div>
       </form>
