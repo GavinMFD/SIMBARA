@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { buildTransaksiAtkFilter } from "./_lib/filter";
 
 // ─── Interfaces ──────────────────────────────────────────────
 interface SelectedItem {
@@ -212,15 +213,20 @@ export async function POST(request: NextRequest) {
 }
 
 // ─── GET /api/transaksi-atk ──────────────────────────────────
-// Ambil daftar transaksi ATK dengan pagination
+// Ambil riwayat transaksi ATK — terurut dari tanggal terbaru,
+// dengan dukungan filter: tanggalDari, tanggalSampai, unitKerja, namaBarang.
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "20");
 
+    // Bangun where clause dari query params
+    const where = buildTransaksiAtkFilter(searchParams);
+
     const [transaksi, total] = await Promise.all([
       prisma.transaksiAtk.findMany({
+        where,
         include: {
           masterBarang: { select: { namaBarang: true, satuan: true } },
           detail: {
@@ -233,7 +239,7 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.transaksiAtk.count(),
+      prisma.transaksiAtk.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -245,6 +251,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / pageSize),
     });
   } catch (error) {
+    console.error("GET /api/transaksi-atk error:", error);
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data transaksi ATK." },
       { status: 500 }
