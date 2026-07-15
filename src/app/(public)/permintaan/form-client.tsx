@@ -47,8 +47,7 @@ function SearchableDropdown({
 
   const selectedItem = options.find((o) => o.id === value);
   const filteredOptions = options.filter(
-    (o) =>
-      o.nama.toLowerCase().includes(search.toLowerCase()) && o.stok > 0
+    (o) => o.nama.toLowerCase().includes(search.toLowerCase())
   );
 
   useEffect(() => {
@@ -94,24 +93,36 @@ function SearchableDropdown({
           </div>
           <div className="p-1">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((item) => (
-                <div
-                  key={item.id}
-                  className="px-3 py-2 hover:bg-slate-50 cursor-pointer rounded-lg text-sm text-slate-700 flex justify-between items-center"
-                  onClick={() => {
-                    onChange(item.id);
-                    setIsOpen(false);
-                  }}
-                >
-                  <span className="font-medium">{item.nama}</span>
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                    Stok: {item.stok} {item.satuan}
-                  </span>
-                </div>
-              ))
+              filteredOptions.map((item) => {
+                const isOutOfStock = item.stok === 0;
+                return (
+                  <div
+                    key={item.id}
+                    className={`px-3 py-2 cursor-pointer rounded-lg text-sm flex justify-between items-center transition-colors ${
+                      isOutOfStock ? "hover:bg-red-50 text-slate-400" : "hover:bg-slate-50 text-slate-700"
+                    }`}
+                    onClick={() => {
+                      // Allow selecting even if out of stock, so real-time fetch can confirm.
+                      onChange(item.id);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <span className="font-medium">{item.nama}</span>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-md font-medium ${
+                        isOutOfStock
+                          ? "bg-red-100 text-red-600"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {isOutOfStock ? "Stok Habis" : `Stok: ${item.stok} ${item.satuan}`}
+                    </span>
+                  </div>
+                );
+              })
             ) : (
               <div className="px-3 py-4 text-center text-sm text-slate-500">
-                Barang tidak ditemukan atau stok kosong.
+                Barang tidak ditemukan.
               </div>
             )}
           </div>
@@ -126,6 +137,8 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
   const [tanggal, setTanggal] = useState("");
   const [unitKerja, setUnitKerja] = useState("");
   const [items, setItems] = useState<SelectedItem[]>([{ barangId: "", quantity: 1 }]);
+  const [realtimeStock, setRealtimeStock] = useState<Record<string, number>>({});
+  const [isFetchingStock, setIsFetchingStock] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -139,11 +152,33 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
     setItems(newItems);
   };
 
-  const handleItemChange = (index: number, barangId: string) => {
+  const handleItemChange = async (index: number, barangId: string) => {
     const newItems = [...items];
     newItems[index].barangId = barangId;
     newItems[index].quantity = 1;
     setItems(newItems);
+
+    if (!barangId) return;
+
+    // Fetch real-time stock
+    setIsFetchingStock((prev) => ({ ...prev, [barangId]: true }));
+    try {
+      const res = await fetch(`/api/barang/${barangId}`);
+      const json = await res.json();
+      if (json.success) {
+        setRealtimeStock((prev) => ({ ...prev, [barangId]: json.data.stok }));
+        // If stock is 0, update quantity to 0
+        if (json.data.stok === 0) {
+          const updatedItems = [...newItems];
+          updatedItems[index].quantity = 0;
+          setItems(updatedItems);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat stok real-time", err);
+    } finally {
+      setIsFetchingStock((prev) => ({ ...prev, [barangId]: false }));
+    }
   };
 
   const handleQtyChange = (index: number, qty: number) => {
@@ -176,12 +211,20 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
       const details = barangList.find((b) => b.id === item.barangId);
       if (!details) continue;
 
+      const currentStock = realtimeStock[item.barangId] !== undefined ? realtimeStock[item.barangId] : details.stok;
+
+      if (currentStock === 0) {
+        setError(`Maaf, stok untuk "${details.nama}" sedang habis.`);
+        return;
+      }
+
       if (item.quantity <= 0) {
         setError(`Jumlah untuk "${details.nama}" harus lebih besar dari 0.`);
         return;
       }
-      if (item.quantity > details.stok) {
-        setError(`Stok tidak mencukupi untuk "${details.nama}". Stok tersedia: ${details.stok} ${details.satuan}.`);
+      
+      if (item.quantity > currentStock) {
+        setError(`Stok tidak mencukupi untuk "${details.nama}". Stok tersedia: ${currentStock} ${details.satuan}.`);
         return;
       }
     }
@@ -311,46 +354,74 @@ export default function PermintaanForm({ barangList = [] }: FormClientProps) {
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {items.map((item, index) => {
               const selectedDetails = barangList.find((b) => b.id === item.barangId);
+              const isFetching = item.barangId && isFetchingStock[item.barangId];
+              const stockValue = item.barangId && realtimeStock[item.barangId] !== undefined 
+                ? realtimeStock[item.barangId] 
+                : selectedDetails?.stok;
+              const isOutOfStock = stockValue === 0;
+
               return (
-                <div
-                  key={index}
-                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-1"
-                >
-                  <div className="flex-1">
-                    <SearchableDropdown
-                      options={barangList}
-                      value={item.barangId}
-                      onChange={(val) => handleItemChange(index, val)}
-                      placeholder="Cari & Pilih Barang BMN..."
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="1"
-                      max={selectedDetails ? selectedDetails.stok : undefined}
-                      value={item.quantity}
-                      onChange={(e) => handleQtyChange(index, parseInt(e.target.value) || 0)}
-                      placeholder="Qty"
-                      className="w-20 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[14px] text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-center"
-                      disabled={!item.barangId}
-                    />
-                    <span className="text-[13px] font-semibold text-slate-500 w-12 truncate">
-                      {selectedDetails ? selectedDetails.satuan : "satuan"}
-                    </span>
-                    {items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(index)}
-                        className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                        title="Hapus Baris"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
+                <div key={index} className="flex flex-col gap-1 p-1">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
+                    <div className="flex-1">
+                      <SearchableDropdown
+                        options={barangList}
+                        value={item.barangId}
+                        onChange={(val) => handleItemChange(index, val)}
+                        placeholder="Cari & Pilih Barang BMN..."
+                      />
+                      {/* Real-time stock indicator */}
+                      {item.barangId && (
+                        <div className="mt-1.5 ml-1 flex items-center">
+                          {isFetching ? (
+                            <span className="text-[13px] text-slate-500 animate-pulse flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                              Memeriksa stok live...
+                            </span>
+                          ) : (
+                            <span className={`text-[13px] font-medium flex items-center gap-1.5 ${isOutOfStock ? "text-red-500" : "text-emerald-600"}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? "bg-red-500" : "bg-emerald-500"}`}></span>
+                              {isOutOfStock ? "Stok Habis" : `Tersedia: ${stockValue} ${selectedDetails?.satuan}`}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <input
+                          type="number"
+                          min={isOutOfStock ? "0" : "1"}
+                          max={stockValue}
+                          value={item.quantity}
+                          onChange={(e) => handleQtyChange(index, parseInt(e.target.value) || 0)}
+                          placeholder="Qty"
+                          className={`w-20 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[14px] text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-center ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                          disabled={!item.barangId || isOutOfStock}
+                        />
+                      </div>
+                      
+                      <div className="py-3 flex items-center">
+                        <span className="text-[13px] font-semibold text-slate-500 w-12 truncate">
+                          {selectedDetails ? selectedDetails.satuan : "satuan"}
+                        </span>
+                      </div>
+
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="mt-1 p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          title="Hapus Baris"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
