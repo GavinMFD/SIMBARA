@@ -212,42 +212,142 @@ export async function POST(request: NextRequest) {
 }
 
 // ─── GET /api/transaksi-atk ──────────────────────────────────
-// Ambil daftar transaksi ATK dengan pagination
+// Ambil daftar transaksi ATK dengan pagination, filter, dan export Excel
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "20");
+    const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    const namaPegawai = searchParams.get("namaPegawai") || "";
+    const unitKerja = searchParams.get("unitKerja") || "";
+    const startDate = searchParams.get("startDate") || "";
+    const endDate = searchParams.get("endDate") || "";
+    const isExport = searchParams.get("export") === "excel";
 
-    const [transaksi, total] = await Promise.all([
-      prisma.transaksiAtk.findMany({
+    // ── Build filter where clause ──
+    const where: Prisma.TransaksiAtkWhereInput = {};
+
+    if (namaPegawai) {
+      where.namaPegawai = { contains: namaPegawai, mode: "insensitive" };
+    }
+    if (unitKerja) {
+      where.unitKerja = unitKerja;
+    }
+    if (startDate || endDate) {
+      where.tanggalPengambilan = {};
+      if (startDate) {
+        (where.tanggalPengambilan as Prisma.DateTimeFilter).gte = new Date(startDate + "T00:00:00.000Z");
+      }
+      if (endDate) {
+        (where.tanggalPengambilan as Prisma.DateTimeFilter).lte = new Date(endDate + "T23:59:59.999Z");
+      }
+    }
+
+    // ── Group transaksi by namaPegawai + tanggal + unitKerja ──
+    // karena 1 submit bisa menghasilkan multiple TransaksiAtk (per barang)
+    // Ambil semua untuk di-group di application level
+    if (isExport) {
+      const allTransaksi = await prisma.transaksiAtk.findMany({
+        where,
         include: {
           masterBarang: { select: { namaBarang: true, satuan: true } },
-          detail: {
-            include: {
-              batchSuratBelanja: { select: { noSuratBelanja: true, tanggalBelanja: true } },
-            },
-          },
         },
         orderBy: { tanggalPengambilan: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.transaksiAtk.count(),
-    ]);
+      });
+
+      // Group by pegawai + tanggal + unit
+      const grouped = groupTransaksi(allTransaksi);
+
+      // Build Excel-like CSV
+      const csvHeader = "No,Nama Pegawai,Tanggal,Unit/Bidang,Daftar Barang,Total Item\n";
+      const csvRows = grouped.map((row, i) => {
+        const barangList = row.items.map((it: any) => `${it.namaBarang} (${it.qty})`).join("; ");
+        const totalItem = row.items.reduce((s: number, it: any) => s + it.qty, 0);
+        const tgl = new Date(row.tanggal).toLocaleDateString("id-ID", {
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit", timeZone: "Asia/Makassar",
+        });
+        return `${i + 1},"${row.namaPegawai}","${tgl}","${row.unitKerja}","${barangList}",${totalItem}`;
+      });
+
+      const csv = csvHeader + csvRows.join("\n");
+
+      return new NextResponse(csv, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="riwayat-atk-${new Date().toISOString().slice(0, 10)}.csv"`,
+        },
+      });
+    }
+
+    // ── Regular paginated response ──
+    const allTransaksi = await prisma.transaksiAtk.findMany({
+      where,
+      include: {
+        masterBarang: { select: { namaBarang: true, satuan: true } },
+      },
+      orderBy: { tanggalPengambilan: "desc" },
+    });
+
+    const grouped = groupTransaksi(allTransaksi);
+    const total = grouped.length;
+    const paginated = grouped.slice((page - 1) * pageSize, page * pageSize);
+
+    // ── Stats: total bulan ini ──
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const totalBulanIni = await prisma.transaksiAtk.count({
+      where: { tanggalPengambilan: { gte: startOfMonth } },
+    });
 
     return NextResponse.json({
       success: true,
-      data: transaksi,
+      data: paginated,
       total,
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize),
+      stats: {
+        totalBulanIni,
+      },
     });
   } catch (error) {
+    console.error("GET /api/transaksi-atk error:", error);
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data transaksi ATK." },
       { status: 500 }
     );
   }
+}
+
+// ─── Helper: group individual TransaksiAtk rows into submission groups ───
+function groupTransaksi(transaksiList: any[]) {
+  const map = new Map<string, any>();
+
+  for (const t of transaksiList) {
+    // Group key: namaPegawai + unitKerja + rounded-to-minute timestamp
+    const roundedTime = new Date(t.tanggalPengambilan);
+    roundedTime.setSeconds(0, 0);
+    const key = `${t.namaPegawai}__${t.unitKerja}__${roundedTime.toISOString()}`;
+
+    if (!map.has(key)) {
+      map.set(key, {
+        id: t.id,
+        namaPegawai: t.namaPegawai,
+        unitKerja: t.unitKerja,
+        tanggal: t.tanggalPengambilan,
+        items: [],
+      });
+    }
+
+    map.get(key).items.push({
+      barangId: t.masterBarangId,
+      namaBarang: t.masterBarang?.namaBarang ?? "-",
+      satuan: t.masterBarang?.satuan ?? "",
+      qty: t.qtyDiambil,
+    });
+  }
+
+  return Array.from(map.values());
 }

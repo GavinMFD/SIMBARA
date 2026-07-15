@@ -16,6 +16,7 @@ import {
   Settings,
   Plus,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/app/(auth)/login/actions";
@@ -26,6 +27,7 @@ const navigation = [
   { name: "Kategori", href: "/kategori", icon: Tags },
   { name: "Ruangan", href: "/ruangan", icon: DoorOpen },
   { name: "Movement Tracking", href: "/mutasi", icon: ArrowLeftRight },
+  { name: "Log ATK", href: "/atk", icon: ClipboardList },
   { name: "Reports", href: "/laporan", icon: FileBarChart2 },
   { name: "Pengguna", href: "/pengguna", icon: Users },
 ];
