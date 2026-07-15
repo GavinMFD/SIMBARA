@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={cn("h-full", "antialiased", inter.variable, "font-sans", geist.variable)}>
+    <html lang="id" className={cn("h-full", "antialiased", "dark", inter.variable, "font-sans", geist.variable)}>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );

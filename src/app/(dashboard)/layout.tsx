@@ -29,10 +29,10 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar user={user} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar user={user} />
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-900">
+        <main className="flex-1 overflow-y-auto bg-[#020b14] bg-grid-dots p-6">
           {children}
         </main>
       </div>
