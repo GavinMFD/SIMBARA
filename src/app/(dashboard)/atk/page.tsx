@@ -205,9 +205,9 @@ export default function RiwayatAtkPage() {
 
       {/* Filter Card */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5">
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-nowrap gap-3 items-end overflow-x-auto">
           {/* Nama Pegawai */}
-          <div className="flex-1 min-w-[180px] space-y-1.5">
+          <div className="flex-1 min-w-0 space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nama Pegawai</label>
             <div className="relative">
               <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -223,30 +223,32 @@ export default function RiwayatAtkPage() {
           </div>
 
           {/* Rentang Tanggal */}
-          <div className="flex-1 min-w-[200px] space-y-1.5">
+          <div className="flex-none space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rentang Tanggal</label>
-            <div className="relative flex items-center gap-2">
-              <CalendarRange size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="flex-1 pl-9 pr-2 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
-                style={{ colorScheme: "dark" }}
-              />
-              <span className="text-slate-600 text-xs">s/d</span>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <CalendarRange size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-[155px] pl-9 pr-2 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                  style={{ colorScheme: "dark" }}
+                />
+              </div>
+              <span className="text-slate-500 text-xs font-medium shrink-0">s/d</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="flex-1 px-3 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-[155px] px-3 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                 style={{ colorScheme: "dark" }}
               />
             </div>
           </div>
 
           {/* Unit/Bidang */}
-          <div className="min-w-[180px] space-y-1.5">
+          <div className="flex-1 min-w-[160px] space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unit / Bidang</label>
             <div className="relative">
               <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -264,7 +266,7 @@ export default function RiwayatAtkPage() {
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 pt-[22px]">
             <button
               onClick={handleApplyFilter}
               className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/20"
