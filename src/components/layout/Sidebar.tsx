@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -50,25 +51,32 @@ export default function Sidebar({ user }: { user?: any }) {
       }`}
     >
       {/* Logo & Toggle Header */}
-      <div className="flex h-20 items-center justify-between border-b border-border px-4">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-lg shadow-blue-500/20">
-            <Package className="h-5 w-5" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-white tracking-wider leading-none">
+      <div className={`flex h-20 items-center border-b border-border px-3 ${
+        collapsed ? "justify-center" : "justify-between"
+      }`}>
+        {!collapsed && (
+          <div className="flex items-center gap-3 overflow-hidden">
+            <Image
+              src="/logo-simbara.png"
+              alt="Logo SIMBARA"
+              width={40}
+              height={40}
+              className="shrink-0 rounded-lg"
+              priority
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold text-white tracking-wider">
                 SIMBARA
               </span>
-              <span className="text-[10px] text-slate-500 font-semibold tracking-widest mt-1">
-                KOTA PALU
+              <span className="text-[10px] text-slate-400 font-semibold tracking-widest mt-0.5">
+                BPS Kota Palu
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
