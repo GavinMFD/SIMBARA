@@ -18,6 +18,8 @@ import {
   Plus,
   LogOut,
   ClipboardList,
+  PackagePlus,
+  PackageOpen,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/app/(auth)/login/actions";
@@ -29,6 +31,8 @@ const navigation = [
   { name: "Ruangan", href: "/ruangan", icon: DoorOpen },
   { name: "Movement Tracking", href: "/mutasi", icon: ArrowLeftRight },
   { name: "Log ATK", href: "/atk", icon: ClipboardList },
+  { name: "Kelola Barang ATK", href: "/master-barang", icon: PackagePlus },
+  { name: "Stok Masuk", href: "/stok-masuk", icon: PackageOpen },
   { name: "Reports", href: "/laporan", icon: FileBarChart2 },
   { name: "Pengguna", href: "/pengguna", icon: Users },
 ];
