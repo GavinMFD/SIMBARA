@@ -106,9 +106,13 @@ export async function PUT(
 }
 
 // ─── DELETE /api/master-barang/[id] ──────────────────────────
-// Soft-delete: set isActive = false.
-// Barang yang di-nonaktifkan tidak muncul di dropdown pegawai,
-// tapi histori transaksi tetap valid.
+// Strategi:
+// - Barang TANPA transaksi → hard-delete (hapus permanen)
+// - Barang DENGAN transaksi → soft-delete (toggle isActive)
+//
+// Transaksi yang dicek:
+// 1. BatchSuratBelanja (stok masuk)
+// 2. TransaksiAtk (pengambilan barang)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -116,6 +120,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // ── 1. Cek barang exists ────────────────────────────────
     const existing = await prisma.masterBarang.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
@@ -124,15 +129,41 @@ export async function DELETE(
       );
     }
 
+    // ── 2. Cek apakah barang punya transaksi terkait ────────
+    const [batchCount, transaksiCount] = await Promise.all([
+      prisma.batchSuratBelanja.count({ where: { masterBarangId: id } }),
+      prisma.transaksiAtk.count({ where: { masterBarangId: id } }),
+    ]);
+
+    const hasTransactions = batchCount > 0 || transaksiCount > 0;
+
+    // ── 3a. Tidak ada transaksi → hard-delete ───────────────
+    if (!hasTransactions) {
+      await prisma.masterBarang.delete({ where: { id } });
+      return NextResponse.json({
+        success: true,
+        message: `Barang "${existing.namaBarang}" berhasil dihapus permanen.`,
+        deleteType: "hard",
+      });
+    }
+
+    // ── 3b. Ada transaksi → soft-delete (toggle isActive) ───
+    const newStatus = !existing.isActive;
     await prisma.masterBarang.update({
       where: { id },
-      data: { isActive: !existing.isActive },
+      data: { isActive: newStatus },
     });
 
-    const action = existing.isActive ? "dinonaktifkan" : "diaktifkan kembali";
+    const action = newStatus ? "diaktifkan kembali" : "dinonaktifkan";
     return NextResponse.json({
       success: true,
-      message: `Barang berhasil ${action}.`,
+      message: `Barang "${existing.namaBarang}" berhasil ${action}. Tidak dapat dihapus permanen karena memiliki ${batchCount} batch stok masuk dan ${transaksiCount} transaksi pengambilan.`,
+      deleteType: "soft",
+      hasTransactions: true,
+      transactionSummary: {
+        batchSuratBelanja: batchCount,
+        transaksiAtk: transaksiCount,
+      },
     });
   } catch (error) {
     console.error("DELETE /api/master-barang/[id] error:", error);

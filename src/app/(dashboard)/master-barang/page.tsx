@@ -65,6 +65,7 @@ export default function MasterBarangPage() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingStok, setEditingStok] = useState<{ totalStok: number; satuan: string } | null>(null);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -117,6 +118,7 @@ export default function MasterBarangPage() {
 
   const openAddModal = () => {
     setEditingId(null);
+    setEditingStok(null);
     setFormData(INITIAL_FORM);
     setFormError("");
     setIsModalOpen(true);
@@ -124,6 +126,7 @@ export default function MasterBarangPage() {
 
   const openEditModal = (b: MasterBarangRow) => {
     setEditingId(b.id);
+    setEditingStok({ totalStok: b.totalStok, satuan: b.satuan });
     setFormData({
       namaBarang: b.namaBarang,
       satuan: b.satuan,
@@ -137,6 +140,7 @@ export default function MasterBarangPage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
+    setEditingStok(null);
     setFormData(INITIAL_FORM);
     setFormError("");
     setShowNewKategori(false);
@@ -574,6 +578,39 @@ export default function MasterBarangPage() {
                   <p className="text-[10px] text-slate-500 mt-0.5">Alert tampil jika stok di bawah nilai ini</p>
                 </div>
               </div>
+
+              {/* Stok Aktual — read-only, hanya tampil saat edit */}
+              {editingId && editingStok && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Stok Aktual
+                  </label>
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-[#0a2240]/60 border border-[#143550] rounded-xl">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                      editingStok.totalStok < formData.stokMinimum
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-emerald-500/20 text-emerald-400"
+                    }`}>
+                      <Package size={14} />
+                    </div>
+                    <div>
+                      <span className={`text-lg font-bold ${
+                        editingStok.totalStok < formData.stokMinimum ? "text-red-400" : "text-emerald-400"
+                      }`}>
+                        {editingStok.totalStok}
+                      </span>
+                      <span className="text-sm text-slate-500 ml-1.5">{editingStok.satuan}</span>
+                    </div>
+                    {editingStok.totalStok < formData.stokMinimum && (
+                      <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-600/20 text-red-400 border border-red-600/30">
+                        <AlertTriangle size={10} />
+                        Di bawah minimum
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Stok dikelola melalui menu Stok Masuk & Transaksi ATK</p>
+                </div>
+              )}
 
               {/* Submit */}
               <div className="flex items-center justify-end gap-3 pt-2">
