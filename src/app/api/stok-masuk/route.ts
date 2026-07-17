@@ -74,6 +74,15 @@ export async function GET(request: NextRequest) {
       where: { createdAt: { gte: startOfMonth } },
     });
 
+    // Total Nilai Sisa untuk data yang terfilter (Semua Halaman)
+    const allFilteredBatches = await prisma.batchSuratBelanja.findMany({
+      where,
+      select: { sisaQty: true, hargaSatuan: true },
+    });
+    const totalNilaiSisaFilterAktif = allFilteredBatches.reduce((acc, batch) => {
+      return acc + (batch.sisaQty * Number(batch.hargaSatuan));
+    }, 0);
+
     return NextResponse.json({
       success: true,
       data: batches,
@@ -83,6 +92,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / pageSize),
       stats: {
         totalStokMasukBulanIni: totalBulanIni._sum.qtyMasuk || 0,
+        totalNilaiSisaFilterAktif,
       },
     });
   } catch (error) {

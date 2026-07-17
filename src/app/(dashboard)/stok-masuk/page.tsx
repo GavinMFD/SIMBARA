@@ -63,17 +63,19 @@ export default function StokMasukPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
-  const [stats, setStats] = useState<{ totalStokMasukBulanIni: number } | null>(null);
+  const [stats, setStats] = useState<{ totalStokMasukBulanIni: number; totalNilaiSisaFilterAktif?: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter state
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [filterBarangId, setFilterBarangId] = useState("");
   const [appliedFilter, setAppliedFilter] = useState({
     search: "",
     startDate: "",
     endDate: "",
+    masterBarangId: "",
   });
 
   // Modal state
@@ -91,6 +93,7 @@ export default function StokMasukPage() {
         if (f.search) params.set("search", f.search);
         if (f.startDate) params.set("startDate", f.startDate);
         if (f.endDate) params.set("endDate", f.endDate);
+        if (f.masterBarangId) params.set("masterBarangId", f.masterBarangId);
         params.set("page", String(p));
         params.set("pageSize", String(PAGE_SIZE));
 
@@ -139,15 +142,16 @@ export default function StokMasukPage() {
   // ── Filter Handlers ────────────────────────────────────
   const handleApplyFilter = () => {
     setPage(1);
-    setAppliedFilter({ search, startDate, endDate });
+    setAppliedFilter({ search, startDate, endDate, masterBarangId: filterBarangId });
   };
 
   const handleResetFilter = () => {
     setSearch("");
     setStartDate("");
     setEndDate("");
+    setFilterBarangId("");
     setPage(1);
-    setAppliedFilter({ search: "", startDate: "", endDate: "" });
+    setAppliedFilter({ search: "", startDate: "", endDate: "", masterBarangId: "" });
   };
 
   // ── Modal Handlers ─────────────────────────────────────
@@ -255,6 +259,26 @@ export default function StokMasukPage() {
             </div>
           </div>
 
+          {/* Filter Barang */}
+          <div className="flex-none w-48 space-y-1.5">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Barang</label>
+            <div className="relative">
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <select
+                value={filterBarangId}
+                onChange={(e) => setFilterBarangId(e.target.value)}
+                className="w-full pl-4 pr-9 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none transition-colors"
+              >
+                <option value="">Semua Barang</option>
+                {barangOptions.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.namaBarang}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           {/* Rentang Tanggal */}
           <div className="flex-none space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rentang Tanggal</label>
@@ -313,6 +337,7 @@ export default function StokMasukPage() {
                 <th className="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Harga Satuan</th>
                 <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Qty Masuk</th>
                 <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Sisa Qty</th>
+                <th className="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Nilai Sisa (Rp)</th>
                 <th className="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Dicatat Oleh</th>
               </tr>
             </thead>
@@ -327,12 +352,13 @@ export default function StokMasukPage() {
                     <td className="px-5 py-4"><div className="h-4 w-20 bg-[#0f2b48] rounded ml-auto" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-10 bg-[#0f2b48] rounded mx-auto" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-10 bg-[#0f2b48] rounded mx-auto" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-24 bg-[#0f2b48] rounded ml-auto" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-20 bg-[#0f2b48] rounded" /></td>
                   </tr>
                 ))
               ) : batches.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-16 text-center">
+                  <td colSpan={9} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-600">
                       <PackageOpen size={40} strokeWidth={1} />
                       <p className="text-sm font-medium">Belum ada data stok masuk</p>
@@ -383,6 +409,9 @@ export default function StokMasukPage() {
                             />
                           </div>
                         </div>
+                      </td>
+                      <td className="px-5 py-4 text-right text-sm font-bold text-emerald-400">
+                        {formatCurrency(Number(b.hargaSatuan) * b.sisaQty)}
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-400">{b.pencatat.nama}</td>
                     </tr>
@@ -451,7 +480,7 @@ export default function StokMasukPage() {
       </div>
 
       {/* ── Stats Cards ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5 flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
             <TrendingUp size={22} />
@@ -473,6 +502,17 @@ export default function StokMasukPage() {
             <p className="text-2xl font-bold text-white mt-0.5">
               {total.toLocaleString("id-ID")}
               <span className="text-sm font-normal text-slate-500 ml-1">batch</span>
+            </p>
+          </div>
+        </div>
+        <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-600/20 text-purple-400">
+            <Package size={22} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Total Nilai Sisa (Filter Aktif)</p>
+            <p className="text-2xl font-bold text-white mt-0.5">
+              {stats?.totalNilaiSisaFilterAktif !== undefined ? formatCurrency(stats.totalNilaiSisaFilterAktif) : "—"}
             </p>
           </div>
         </div>
