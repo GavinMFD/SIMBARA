@@ -83,6 +83,17 @@ export async function PUT(
       updateData.stokMinimum = Math.floor(stokMinimum);
     }
 
+    const { stokAktual } = body;
+    if (stokAktual !== undefined) {
+      if (stokAktual < 0) {
+        return NextResponse.json(
+          { success: false, error: "Stok aktual tidak boleh negatif." },
+          { status: 400 }
+        );
+      }
+      updateData.stokAktual = Math.floor(stokAktual);
+    }
+
     const barang = await prisma.masterBarang.update({
       where: { id },
       data: updateData,

@@ -7,6 +7,7 @@ interface MasterBarangRequest {
   satuan: string;
   kategoriBarangId: string;
   stokMinimum: number;
+  stokAktual?: number;
 }
 
 // ─── GET /api/master-barang ──────────────────────────────────
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
         namaBarang: b.namaBarang,
         satuan: b.satuan,
         stokMinimum: b.stokMinimum,
+        stokAktual: b.stokAktual,
         isActive: b.isActive,
         createdAt: b.createdAt,
         kategori: b.kategori,
@@ -90,7 +92,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body: MasterBarangRequest = await request.json();
-    const { namaBarang, satuan, kategoriBarangId, stokMinimum } = body;
+    const { namaBarang, satuan, kategoriBarangId, stokMinimum, stokAktual = 0 } = body;
 
     // ── Validasi input ─────────────────────────────────────
     if (!namaBarang || typeof namaBarang !== "string" || namaBarang.trim().length === 0) {
@@ -121,7 +123,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Validasi nama unik (case-insensitive) ──────────────
+    if (stokAktual < 0) {
+      return NextResponse.json(
+        { success: false, error: "Stok aktual tidak boleh negatif." },
+        { status: 400 }
+      );
+    }
+
+    // ── Validasi nama unik (case-insensitive) — hanya blokir jika aktif ──
     const existing = await prisma.masterBarang.findFirst({
       where: {
         namaBarang: { equals: namaBarang.trim(), mode: "insensitive" },
@@ -129,10 +138,35 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
-      return NextResponse.json(
-        { success: false, error: `Barang dengan nama "${namaBarang.trim()}" sudah terdaftar.` },
-        { status: 409 }
-      );
+      if (existing.isActive) {
+        return NextResponse.json(
+          { success: false, error: `Barang dengan nama "${namaBarang.trim()}" sudah terdaftar.` },
+          { status: 409 }
+        );
+      } else {
+        // Barang nonaktif dengan nama sama — aktifkan kembali dan update
+        const reactivated = await prisma.masterBarang.update({
+          where: { id: existing.id },
+          data: {
+            isActive: true,
+            satuan: satuan.trim(),
+            kategoriBarangId,
+            stokMinimum: Math.floor(stokMinimum),
+            stokAktual: Math.floor(stokAktual),
+          },
+          include: {
+            kategori: { select: { id: true, namaKategori: true } },
+          },
+        });
+        return NextResponse.json(
+          {
+            success: true,
+            data: { ...reactivated, totalStok: 0, isLowStock: true },
+            message: `Barang "${namaBarang.trim()}" yang sebelumnya nonaktif telah diaktifkan kembali.`,
+          },
+          { status: 200 }
+        );
+      }
     }
 
     // ── Validasi kategori exists ───────────────────────────
@@ -154,16 +188,35 @@ export async function POST(request: NextRequest) {
         satuan: satuan.trim(),
         kategoriBarangId,
         stokMinimum: Math.floor(stokMinimum),
+        stokAktual: Math.floor(stokAktual),
       },
       include: {
         kategori: { select: { id: true, namaKategori: true } },
       },
     });
 
+    if (Math.floor(stokAktual) > 0) {
+      // Find an admin user to assign as pencatat
+      const adminUser = await prisma.user.findFirst();
+      if (adminUser) {
+        await prisma.batchSuratBelanja.create({
+          data: {
+            masterBarangId: barang.id,
+            noSuratBelanja: "STOK_AWAL",
+            tanggalBelanja: new Date(),
+            hargaSatuan: 0,
+            qtyMasuk: Math.floor(stokAktual),
+            sisaQty: Math.floor(stokAktual),
+            dicatatOleh: adminUser.id,
+          },
+        });
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
-        data: { ...barang, totalStok: 0, isLowStock: true },
+        data: { ...barang, totalStok: Math.floor(stokAktual), isLowStock: Math.floor(stokAktual) < Math.floor(stokMinimum) },
         message: "Barang berhasil ditambahkan.",
       },
       { status: 201 }

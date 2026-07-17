@@ -7,7 +7,7 @@ import {
   Package,
   AlertTriangle,
   Edit3,
-  Power,
+  Trash2,
   X,
   ChevronDown,
   RefreshCw,
@@ -28,6 +28,7 @@ interface MasterBarangRow {
   namaBarang: string;
   satuan: string;
   stokMinimum: number;
+  stokAktual: number;
   isActive: boolean;
   createdAt: string;
   kategori: { id: string; namaKategori: string };
@@ -40,6 +41,7 @@ interface FormData {
   satuan: string;
   kategoriBarangId: string;
   stokMinimum: number;
+  stokAktual: number | string;
 }
 
 const INITIAL_FORM: FormData = {
@@ -47,6 +49,7 @@ const INITIAL_FORM: FormData = {
   satuan: "",
   kategoriBarangId: "",
   stokMinimum: 5,
+  stokAktual: 0,
 };
 
 // ─── Main Page Component ─────────────────────────────────────
@@ -132,6 +135,7 @@ export default function MasterBarangPage() {
       satuan: b.satuan,
       kategoriBarangId: b.kategori.id,
       stokMinimum: b.stokMinimum,
+      stokAktual: b.stokAktual,
     });
     setFormError("");
     setIsModalOpen(true);
@@ -157,10 +161,15 @@ export default function MasterBarangPage() {
       const url = editingId ? `/api/master-barang/${editingId}` : "/api/master-barang";
       const method = editingId ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        stokAktual: formData.stokAktual === "" ? 0 : Number(formData.stokAktual),
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -394,15 +403,15 @@ export default function MasterBarangPage() {
                           <Edit3 size={14} />
                         </button>
                         <button
-                          onClick={() => handleToggleActive(b.id)}
-                          title={b.isActive ? "Nonaktifkan" : "Aktifkan"}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            b.isActive
-                              ? "text-slate-400 hover:bg-red-600/20 hover:text-red-400"
-                              : "text-slate-400 hover:bg-emerald-600/20 hover:text-emerald-400"
-                          }`}
+                          onClick={() => {
+                            if (window.confirm("Apakah Anda yakin ingin menghapus barang ini?")) {
+                              handleToggleActive(b.id);
+                            }
+                          }}
+                          title="Hapus"
+                          className="p-1.5 rounded-lg text-slate-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
                         >
-                          <Power size={14} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -578,6 +587,23 @@ export default function MasterBarangPage() {
                   <p className="text-[10px] text-slate-500 mt-0.5">Alert tampil jika stok di bawah nilai ini</p>
                 </div>
               </div>
+
+              {/* Stok Aktual Input (Hanya untuk Tambah) */}
+              {!editingId && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Stok Aktual
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.stokAktual}
+                    onChange={(e) => setFormData((f) => ({ ...f, stokAktual: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0) }))}
+                    min={0}
+                    placeholder="0"
+                    className="w-full px-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+              )}
 
               {/* Stok Aktual — read-only, hanya tampil saat edit */}
               {editingId && editingStok && (
