@@ -22,7 +22,7 @@ export default function Navbar({ user }: { user: any }) {
   };
 
   return (
-    <header className="flex h-20 items-center justify-between border-b border-border bg-[#030d1a] px-6">
+    <header className="flex h-20 items-center justify-between border-b border-border bg-[#030d1a] px-6 print:hidden">
       {/* Left: Search Box */}
       <div className="relative flex items-center w-full max-w-lg">
         <Search size={16} className="absolute left-3.5 text-slate-400" />

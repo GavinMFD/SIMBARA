@@ -20,6 +20,7 @@ import {
   ClipboardList,
   PackagePlus,
   PackageOpen,
+  AlertTriangle,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/app/(auth)/login/actions";
@@ -33,6 +34,7 @@ const navigation = [
   { name: "Log ATK", href: "/atk", icon: ClipboardList },
   { name: "Kelola Barang ATK", href: "/master-barang", icon: PackagePlus },
   { name: "Stok Masuk", href: "/stok-masuk", icon: PackageOpen },
+  { name: "Barang Kritis", href: "/barang-kritis", icon: AlertTriangle },
   { name: "Reports", href: "/laporan", icon: FileBarChart2 },
   { name: "Pengguna", href: "/pengguna", icon: Users },
 ];
@@ -50,7 +52,7 @@ export default function Sidebar({ user }: { user?: any }) {
 
   return (
     <aside
-      className={`flex h-screen flex-col border-r border-border bg-[#041424] text-slate-300 transition-all duration-300 ${
+      className={`flex h-screen flex-col border-r border-border bg-[#041424] text-slate-300 transition-all duration-300 print:hidden ${
         collapsed ? "w-20" : "w-64"
       }`}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Package,
   ArrowUpRight,
@@ -16,12 +16,34 @@ import {
   ChevronRight,
   ArrowDownToLine,
   TrendingUp,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"yearly" | "monthly" | "weekly">("yearly");
+  const [lowStockItems, setLowStockItems] = useState<any[]>([]);
+  const [isLoadingLowStock, setIsLoadingLowStock] = useState(true);
+
+  useEffect(() => {
+    async function fetchLowStock() {
+      try {
+        const res = await fetch("/api/master-barang?lowStockOnly=true");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success) {
+            setLowStockItems(json.data);
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching low stock:", e);
+      } finally {
+        setIsLoadingLowStock(false);
+      }
+    }
+    fetchLowStock();
+  }, []);
 
   const stats = [
     {
@@ -52,6 +74,34 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Low Stock Alert */}
+      {!isLoadingLowStock && lowStockItems.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
+            <AlertTriangle className="text-red-500" size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-red-500 font-bold text-sm mb-1">
+              PERHATIAN: {lowStockItems.length} Barang Mencapai Batas Minimum Stok
+            </h3>
+            <p className="text-red-400/80 text-xs font-medium mb-3">
+              Segera lakukan reorder untuk item berikut agar operasional tidak terganggu.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {lowStockItems.map((item) => (
+                <div key={item.id} className="flex flex-col bg-red-500/5 border border-red-500/10 rounded-lg p-2.5">
+                  <span className="text-slate-300 font-semibold text-xs truncate" title={item.namaBarang}>{item.namaBarang}</span>
+                  <div className="flex justify-between items-center mt-1.5">
+                    <span className="text-[10px] text-slate-500">Sisa Stok:</span>
+                    <span className="text-xs font-bold text-red-400">{item.totalStok} {item.satuan}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Section / Metrics Row */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
@@ -322,39 +372,35 @@ export default function DashboardPage() {
               Stok Menipis
             </CardTitle>
             <span className="rounded bg-orange-500/10 px-2 py-0.5 text-[9px] font-bold text-orange-400 border border-orange-500/20">
-              3 ITEMS
+              {isLoadingLowStock ? "..." : `${lowStockItems.length} ITEMS`}
             </span>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-semibold">
-                <span className="text-slate-300">Kertas A4 (Rim)</span>
-                <span className="text-slate-400">12/200</span>
+            {isLoadingLowStock ? (
+              <div className="text-xs text-slate-400 text-center py-4">Memuat data...</div>
+            ) : lowStockItems.length === 0 ? (
+              <div className="text-xs text-slate-400 text-center py-4">Stok aman.</div>
+            ) : (
+              lowStockItems.slice(0, 3).map((item) => {
+                const percentage = Math.min(100, (item.totalStok / (item.stokMinimum || 1)) * 100);
+                return (
+                  <div key={item.id} className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-slate-300 truncate pr-2" title={item.namaBarang}>{item.namaBarang}</span>
+                      <span className="text-slate-400 whitespace-nowrap">{item.totalStok}/{item.stokMinimum}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-400 rounded-full" style={{ width: `${percentage}%` }}></div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            {!isLoadingLowStock && lowStockItems.length > 3 && (
+              <div className="text-[10px] text-center text-slate-500 font-medium pt-2">
+                +{lowStockItems.length - 3} item lainnya...
               </div>
-              <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-400 rounded-full" style={{ width: "6%" }}></div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-semibold">
-                <span className="text-slate-300">Tinta Printer (B/W)</span>
-                <span className="text-slate-400">3/50</span>
-              </div>
-              <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-400 rounded-full" style={{ width: "6%" }}></div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-semibold">
-                <span className="text-slate-300">Pulpen Gel 0.5</span>
-                <span className="text-slate-400">45/300</span>
-              </div>
-              <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-500 rounded-full" style={{ width: "15%" }}></div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
