@@ -27,8 +27,8 @@ import { logout } from "@/app/(auth)/login/actions";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Asset Inventory", href: "/barang", icon: Package },
-  { name: "Kategori", href: "/kategori", icon: Tags },
+  { name: "Aset Tetap", href: "/barang", icon: Package },
+  { name: "Kategori Aset", href: "/kategori", icon: Tags },
   { name: "Ruangan", href: "/ruangan", icon: DoorOpen },
   { name: "Movement Tracking", href: "/mutasi", icon: ArrowLeftRight },
   { name: "Log ATK", href: "/atk", icon: ClipboardList },

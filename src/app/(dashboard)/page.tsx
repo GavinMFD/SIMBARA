@@ -43,6 +43,14 @@ export default function DashboardPage() {
       }
     }
     fetchLowStock();
+
+    // Re-fetch low-stock data when the window regains focus (BUG-06 fix).
+    // This ensures the alert updates after editing stokMinimum on another page.
+    const handleFocus = () => {
+      fetchLowStock();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   const stats = [

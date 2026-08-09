@@ -83,16 +83,8 @@ export async function PUT(
       updateData.stokMinimum = Math.floor(stokMinimum);
     }
 
-    const { stokAktual } = body;
-    if (stokAktual !== undefined) {
-      if (stokAktual < 0) {
-        return NextResponse.json(
-          { success: false, error: "Stok aktual tidak boleh negatif." },
-          { status: 400 }
-        );
-      }
-      updateData.stokAktual = Math.floor(stokAktual);
-    }
+    // Note: stokAktual intentionally NOT handled here.
+    // stokAktual is managed exclusively by stok-masuk (POST) and transaksi-atk (POST).
 
     const barang = await prisma.masterBarang.update({
       where: { id },
@@ -119,7 +111,8 @@ export async function PUT(
 // ─── DELETE /api/master-barang/[id] ──────────────────────────
 // Strategi:
 // - Barang TANPA transaksi → hard-delete (hapus permanen)
-// - Barang DENGAN transaksi → soft-delete (toggle isActive)
+// - Barang DENGAN transaksi → soft-delete (set isActive = false)
+//   TIDAK toggle — selalu nonaktifkan. Tidak bisa dihapus permanen.
 //
 // Transaksi yang dicek:
 // 1. BatchSuratBelanja (stok masuk)
@@ -158,17 +151,29 @@ export async function DELETE(
       });
     }
 
-    // ── 3b. Ada transaksi → soft-delete (toggle isActive) ───
-    const newStatus = !existing.isActive;
+    // ── 3b. Ada transaksi → soft-delete (selalu nonaktifkan) ─
+    //   Jika sudah nonaktif, kembalikan pesan bahwa barang sudah dinonaktifkan.
+    if (!existing.isActive) {
+      return NextResponse.json({
+        success: true,
+        message: `Barang "${existing.namaBarang}" sudah dalam status nonaktif. Tidak dapat dihapus permanen karena memiliki ${batchCount} batch stok masuk dan ${transaksiCount} transaksi pengambilan.`,
+        deleteType: "soft",
+        hasTransactions: true,
+        transactionSummary: {
+          batchSuratBelanja: batchCount,
+          transaksiAtk: transaksiCount,
+        },
+      });
+    }
+
     await prisma.masterBarang.update({
       where: { id },
-      data: { isActive: newStatus },
+      data: { isActive: false },
     });
 
-    const action = newStatus ? "diaktifkan kembali" : "dinonaktifkan";
     return NextResponse.json({
       success: true,
-      message: `Barang "${existing.namaBarang}" berhasil ${action}. Tidak dapat dihapus permanen karena memiliki ${batchCount} batch stok masuk dan ${transaksiCount} transaksi pengambilan.`,
+      message: `Barang "${existing.namaBarang}" berhasil dinonaktifkan. Tidak dapat dihapus permanen karena memiliki ${batchCount} batch stok masuk dan ${transaksiCount} transaksi pengambilan.`,
       deleteType: "soft",
       hasTransactions: true,
       transactionSummary: {

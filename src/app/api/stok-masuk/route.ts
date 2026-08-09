@@ -188,6 +188,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // ── Sync stokAktual on MasterBarang ─────────────────────
+    // Recalculate total from all batches to keep stokAktual consistent.
+    const stokResult = await prisma.batchSuratBelanja.aggregate({
+      _sum: { sisaQty: true },
+      where: { masterBarangId },
+    });
+
+    await prisma.masterBarang.update({
+      where: { id: masterBarangId },
+      data: { stokAktual: stokResult._sum.sisaQty ?? 0 },
+    });
+
     return NextResponse.json(
       {
         success: true,

@@ -14,6 +14,7 @@ import {
   Loader2,
   CheckCircle2,
   ShieldAlert,
+  FileText,
   Box,
 } from "lucide-react";
 
@@ -21,6 +22,15 @@ import {
 interface KategoriBarang {
   id: string;
   namaKategori: string;
+}
+
+interface BatchInfo {
+  id: string;
+  noSuratBelanja: string;
+  tanggalBelanja: string;
+  hargaSatuan: number | string;
+  qtyMasuk: number;
+  sisaQty: number;
 }
 
 interface MasterBarangRow {
@@ -34,6 +44,7 @@ interface MasterBarangRow {
   kategori: { id: string; namaKategori: string };
   totalStok: number;
   isLowStock: boolean;
+  batchSuratBelanja?: BatchInfo[];
 }
 
 interface FormData {
@@ -69,6 +80,7 @@ export default function MasterBarangPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingStok, setEditingStok] = useState<{ totalStok: number; satuan: string } | null>(null);
+  const [editingBatches, setEditingBatches] = useState<BatchInfo[]>([]);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -130,6 +142,7 @@ export default function MasterBarangPage() {
   const openEditModal = (b: MasterBarangRow) => {
     setEditingId(b.id);
     setEditingStok({ totalStok: b.totalStok, satuan: b.satuan });
+    setEditingBatches(b.batchSuratBelanja || []);
     setFormData({
       namaBarang: b.namaBarang,
       satuan: b.satuan,
@@ -145,6 +158,7 @@ export default function MasterBarangPage() {
     setIsModalOpen(false);
     setEditingId(null);
     setEditingStok(null);
+    setEditingBatches([]);
     setFormData(INITIAL_FORM);
     setFormError("");
     setShowNewKategori(false);
@@ -161,10 +175,18 @@ export default function MasterBarangPage() {
       const url = editingId ? `/api/master-barang/${editingId}` : "/api/master-barang";
       const method = editingId ? "PUT" : "POST";
 
-      const payload = {
-        ...formData,
-        stokAktual: formData.stokAktual === "" ? 0 : Number(formData.stokAktual),
-      };
+      // For PUT (edit), only send editable fields — stokAktual is managed by system
+      const payload = editingId
+        ? {
+            namaBarang: formData.namaBarang,
+            satuan: formData.satuan,
+            kategoriBarangId: formData.kategoriBarangId,
+            stokMinimum: formData.stokMinimum,
+          }
+        : {
+            ...formData,
+            stokAktual: formData.stokAktual === "" ? 0 : Number(formData.stokAktual),
+          };
 
       const res = await fetch(url, {
         method,
@@ -404,11 +426,16 @@ export default function MasterBarangPage() {
                         </button>
                         <button
                           onClick={() => {
-                            if (window.confirm("Apakah Anda yakin ingin menghapus barang ini?")) {
+                            const msg = b.isActive
+                              ? "Apakah Anda yakin ingin menghapus/menonaktifkan barang ini?"
+                              : "Barang ini sudah dalam status nonaktif.";
+                            if (b.isActive && window.confirm(msg)) {
                               handleToggleActive(b.id);
+                            } else if (!b.isActive) {
+                              alert(msg);
                             }
                           }}
-                          title="Hapus"
+                          title={b.isActive ? "Hapus" : "Sudah Nonaktif"}
                           className="p-1.5 rounded-lg text-slate-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={14} />
@@ -635,6 +662,48 @@ export default function MasterBarangPage() {
                     )}
                   </div>
                   <p className="text-[10px] text-slate-500 mt-0.5">Stok dikelola melalui menu Stok Masuk & Transaksi ATK</p>
+                </div>
+              )}
+
+              {/* Riwayat Surat Belanja — hanya tampil saat edit dan ada batch */}
+              {editingId && editingBatches.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText size={12} />
+                    Riwayat Surat Belanja ({editingBatches.length} batch)
+                  </label>
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-[#143550] bg-[#0a2240]/60">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-[#143550] text-slate-500">
+                          <th className="px-3 py-2 text-left font-semibold">No Surat</th>
+                          <th className="px-3 py-2 text-left font-semibold">Tanggal</th>
+                          <th className="px-3 py-2 text-right font-semibold">Harga</th>
+                          <th className="px-3 py-2 text-center font-semibold">Masuk</th>
+                          <th className="px-3 py-2 text-center font-semibold">Sisa</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#143550]/60">
+                        {editingBatches.map((batch) => (
+                          <tr key={batch.id} className="hover:bg-[#0f2b48]/30">
+                            <td className="px-3 py-1.5 text-slate-300 font-medium">{batch.noSuratBelanja}</td>
+                            <td className="px-3 py-1.5 text-slate-400">
+                              {new Date(batch.tanggalBelanja).toLocaleDateString("id-ID", {
+                                day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Makassar",
+                              })}
+                            </td>
+                            <td className="px-3 py-1.5 text-right text-slate-400">
+                              {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(batch.hargaSatuan))}
+                            </td>
+                            <td className="px-3 py-1.5 text-center text-slate-300">{batch.qtyMasuk}</td>
+                            <td className={`px-3 py-1.5 text-center font-bold ${batch.sisaQty === 0 ? "text-red-400" : "text-emerald-400"}`}>
+                              {batch.sisaQty}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
 

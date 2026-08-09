@@ -1,26 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/barang - Ambil daftar barang (MasterAset)
+// GET /api/barang - Ambil daftar MasterAset dengan filter + pagination
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
     const search = searchParams.get("search") || "";
+    const kategoriAsetId = searchParams.get("kategoriAsetId") || "";
+    const ruanganId = searchParams.get("ruanganId") || "";
+    const kondisi = searchParams.get("kondisi") || "";
 
-    const where = search
-      ? {
-          OR: [
-            { nup: { contains: search, mode: "insensitive" as const } },
-            {
-              batchPembelian: {
-                namaAset: { contains: search, mode: "insensitive" as const },
-              },
-            },
-          ],
-        }
-      : {};
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nup: { contains: search, mode: "insensitive" as const } },
+        {
+          batchPembelian: {
+            namaAset: { contains: search, mode: "insensitive" as const },
+          },
+        },
+      ];
+    }
+
+    if (kategoriAsetId) {
+      where.batchPembelian = {
+        ...where.batchPembelian,
+        kategoriAsetId,
+      };
+    }
+
+    if (ruanganId) {
+      where.ruanganId = ruanganId;
+    }
+
+    if (kondisi) {
+      where.kondisi = kondisi;
+    }
 
     const [barang, total] = await Promise.all([
       prisma.masterAset.findMany({
@@ -45,6 +63,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / pageSize),
     });
   } catch (error) {
+    console.error("GET /api/barang error:", error);
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data barang" },
       { status: 500 }

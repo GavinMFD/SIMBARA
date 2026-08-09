@@ -1,80 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/barang/[id] - Detail barang (MasterAset)
+// GET /api/barang/[id] — Detail single unit aset
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const barang = await prisma.masterAset.findUnique({
+
+    const aset = await prisma.masterAset.findUnique({
       where: { id },
       include: {
-        batchPembelian: { include: { kategori: true } },
+        batchPembelian: {
+          include: {
+            kategori: true,
+            pencatat: { select: { nama: true } },
+          },
+        },
         ruangan: true,
-        mutasiAset: true,
+        mutasiAset: {
+          include: {
+            ruanganAsal: { select: { namaRuangan: true, kodeRuangan: true } },
+            ruanganTujuan: { select: { namaRuangan: true, kodeRuangan: true } },
+            pencatat: { select: { nama: true } },
+          },
+          orderBy: { tanggalMutasi: "desc" },
+        },
+        riwayatKondisiAset: {
+          include: {
+            pencatat: { select: { nama: true } },
+          },
+          orderBy: { tanggalPerubahan: "desc" },
+        },
       },
     });
 
-    if (!barang) {
+    if (!aset) {
       return NextResponse.json(
-        { success: false, error: "Barang tidak ditemukan" },
+        { success: false, error: "Aset tidak ditemukan." },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: barang });
+    return NextResponse.json({ success: true, data: aset });
   } catch (error) {
+    console.error("GET /api/barang/[id] error:", error);
     return NextResponse.json(
-      { success: false, error: "Gagal mengambil detail barang" },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT /api/barang/[id] - Update barang (MasterAset)
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
-    const barang = await prisma.masterAset.update({
-      where: { id },
-      data: body,
-      include: {
-        batchPembelian: { include: { kategori: true } },
-        ruangan: true,
-      },
-    });
-
-    return NextResponse.json({ success: true, data: barang });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: "Gagal mengupdate barang" },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE /api/barang/[id] - Hapus barang (MasterAset)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    await prisma.masterAset.delete({ where: { id } });
-
-    return NextResponse.json({
-      success: true,
-      message: "Barang berhasil dihapus",
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: "Gagal menghapus barang" },
+      { success: false, error: "Gagal mengambil detail aset." },
       { status: 500 }
     );
   }

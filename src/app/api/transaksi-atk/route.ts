@@ -178,6 +178,18 @@ export async function POST(request: NextRequest) {
           details.push(detail);
         }
 
+        // ── 6. Sync stokAktual on MasterBarang ──
+        // Recalculate total from all batches to keep stokAktual consistent.
+        const stokResult = await tx.batchSuratBelanja.aggregate({
+          _sum: { sisaQty: true },
+          where: { masterBarangId: item.barangId },
+        });
+
+        await tx.masterBarang.update({
+          where: { id: item.barangId },
+          data: { stokAktual: stokResult._sum.sisaQty ?? 0 },
+        });
+
         results.push({ transaksi, details });
       }
 

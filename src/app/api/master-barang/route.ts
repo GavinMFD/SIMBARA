@@ -41,8 +41,15 @@ export async function GET(request: NextRequest) {
       include: {
         kategori: { select: { id: true, namaKategori: true } },
         batchSuratBelanja: {
-          select: { sisaQty: true },
-          where: { sisaQty: { gt: 0 } },
+          select: {
+            id: true,
+            noSuratBelanja: true,
+            tanggalBelanja: true,
+            hargaSatuan: true,
+            qtyMasuk: true,
+            sisaQty: true,
+          },
+          orderBy: { tanggalBelanja: "asc" },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -57,7 +64,7 @@ export async function GET(request: NextRequest) {
         namaBarang: b.namaBarang,
         satuan: b.satuan,
         stokMinimum: b.stokMinimum,
-        stokAktual: b.stokAktual,
+        stokAktual: totalStok,
         isActive: b.isActive,
         createdAt: b.createdAt,
         kategori: b.kategori,
@@ -152,7 +159,6 @@ export async function POST(request: NextRequest) {
             satuan: satuan.trim(),
             kategoriBarangId,
             stokMinimum: Math.floor(stokMinimum),
-            stokAktual: Math.floor(stokAktual),
           },
           include: {
             kategori: { select: { id: true, namaKategori: true } },
@@ -188,7 +194,6 @@ export async function POST(request: NextRequest) {
         satuan: satuan.trim(),
         kategoriBarangId,
         stokMinimum: Math.floor(stokMinimum),
-        stokAktual: Math.floor(stokAktual),
       },
       include: {
         kategori: { select: { id: true, namaKategori: true } },
