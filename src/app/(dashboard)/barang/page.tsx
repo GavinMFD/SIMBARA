@@ -17,6 +17,7 @@ import {
   DoorOpen,
   Hash,
   Shield,
+  Download,
 } from "lucide-react";
 
 // ─── Interfaces ──────────────────────────────────────────────
@@ -70,6 +71,7 @@ export default function DaftarAsetPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Filter state
   const [search, setSearch] = useState("");
@@ -161,6 +163,35 @@ export default function DaftarAsetPage() {
     setAppliedFilter({ search: "", kategoriAsetId: "", ruanganId: "", kondisi: "" });
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (appliedFilter.search) params.set("search", appliedFilter.search);
+      if (appliedFilter.kategoriAsetId) params.set("kategoriAsetId", appliedFilter.kategoriAsetId);
+      if (appliedFilter.ruanganId) params.set("ruanganId", appliedFilter.ruanganId);
+      if (appliedFilter.kondisi) params.set("kondisi", appliedFilter.kondisi);
+
+      const res = await fetch(`/api/barang/export?${params.toString()}`);
+      if (!res.ok) throw new Error("Gagal mengekspor data");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Data_Aset_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Terjadi kesalahan saat mengekspor data.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // ── Pagination ─────────────────────────────────────────────
   const startEntry = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endEntry = Math.min(page * PAGE_SIZE, total);
@@ -181,13 +212,23 @@ export default function DaftarAsetPage() {
             Daftar seluruh unit aset tetap dengan NUP masing-masing. Setiap baris = 1 unit fisik.
           </p>
         </div>
-        <Link
-          href="/barang/tambah"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff7e47] hover:bg-[#e06833] text-white text-sm font-semibold shadow-lg shadow-[#ff7e47]/25 transition-all"
-        >
-          <Plus size={16} />
-          Pendataan Baru
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0f2b48] hover:bg-[#143550] text-white text-sm font-semibold border border-[#1a4163] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            Ekspor CSV
+          </button>
+          <Link
+            href="/barang/tambah"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff7e47] hover:bg-[#e06833] text-white text-sm font-semibold shadow-lg shadow-[#ff7e47]/25 transition-all"
+          >
+            <Plus size={16} />
+            Pendataan Baru
+          </Link>
+        </div>
       </div>
 
       {/* ── Filter Card ─────────────────────────────────── */}
