@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // GET /api/kategori - Ambil daftar kategori (KategoriAset)
 export async function GET() {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const kategori = await prisma.kategoriAset.findMany({
       include: { _count: { select: { batchPembelianAset: true } } },
       orderBy: { namaKategori: "asc" },
@@ -21,6 +25,9 @@ export async function GET() {
 // POST /api/kategori - Tambah kategori baru (KategoriAset)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const body = await request.json();
     const kategori = await prisma.kategoriAset.create({ data: body });
 

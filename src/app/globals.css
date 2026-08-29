@@ -145,3 +145,43 @@
   height: 0px;
   background: transparent;
 }
+
+/* ── Print Styles ── */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-size: 10pt;
+  }
+  /* Hide screen-only elements in print */
+  nav, aside, header, footer,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+  /* DIR: ensure tables print with borders */
+  .dir-page table {
+    border-collapse: collapse;
+  }
+  .dir-page th,
+  .dir-page td {
+    border: 1px solid #555 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  /* Ensure zebra striping prints */
+  .dir-page tr:nth-child(even) td {
+    background-color: #f9f9f9 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .dir-page thead tr th {
+    background-color: #111 !important;
+    color: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // GET /api/barang - Ambil daftar MasterAset dengan filter + pagination
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
@@ -74,6 +78,9 @@ export async function GET(request: NextRequest) {
 // POST /api/barang - Tambah barang baru (MasterAset)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const body = await request.json();
     const barang = await prisma.masterAset.create({
       data: body,

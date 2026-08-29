@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // PUT /api/kategori/[id] — Update nama kategori
 export async function PUT(
@@ -7,6 +8,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -46,6 +50,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { id } = await params;
 
     const existing = await prisma.kategoriAset.findUnique({

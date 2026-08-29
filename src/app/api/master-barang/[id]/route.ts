@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // ─── PUT /api/master-barang/[id] ─────────────────────────────
 // Edit MasterBarang. Validasi nama unik (exclude self).
@@ -8,6 +9,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { id } = await params;
     const body = await request.json();
     const { namaBarang, satuan, kategoriBarangId, stokMinimum } = body;
@@ -122,6 +126,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { id } = await params;
 
     // ── 1. Cek barang exists ────────────────────────────────

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // ─── Interfaces ──────────────────────────────────────────────
 interface UnitInput {
@@ -23,6 +23,9 @@ interface AsetMasukRequest {
 // List BatchPembelianAset dengan pagination + filter
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
@@ -79,14 +82,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // ── Auth ──────────────────────────────────────────────────
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: "Sesi tidak valid. Silakan login ulang." },
-        { status: 401 }
-      );
-    }
-    const userId = session.user.id;
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+    const userId = auth.user.id;
 
     const body: AsetMasukRequest = await request.json();
     const {

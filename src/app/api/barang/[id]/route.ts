@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // GET /api/barang/[id] — Detail single unit aset
 export async function GET(
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { id } = await params;
 
     const aset = await prisma.masterAset.findUnique({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // ─── Interfaces ──────────────────────────────────────────────
 interface MasterBarangRequest {
@@ -22,6 +23,9 @@ interface MasterBarangRequest {
 // - all: "true" → termasuk barang non-aktif
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const lowStockOnly = searchParams.get("lowStockOnly") === "true";
@@ -98,6 +102,9 @@ export async function GET(request: NextRequest) {
 // Validasi: nama unik (case-insensitive), semua field wajib.
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const body: MasterBarangRequest = await request.json();
     const { namaBarang, satuan, kategoriBarangId, stokMinimum, stokAktual = 0 } = body;
 

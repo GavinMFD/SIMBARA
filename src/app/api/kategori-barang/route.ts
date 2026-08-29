@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 // ─── GET /api/kategori-barang ────────────────────────────────
 // List semua KategoriBarang beserta jumlah barang terkait.
 // Digunakan untuk dropdown di form tambah/edit Master Barang.
 export async function GET() {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const kategori = await prisma.kategoriBarang.findMany({
       include: { _count: { select: { masterBarang: true } } },
       orderBy: { namaKategori: "asc" },
@@ -25,6 +29,9 @@ export async function GET() {
 // Tambah kategori barang baru (inline dari form tambah barang).
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdminOrKasubag();
+    if (!auth.isAuthorized) return auth.errorResponse!;
+
     const body = await request.json();
     const { namaKategori } = body;
 
