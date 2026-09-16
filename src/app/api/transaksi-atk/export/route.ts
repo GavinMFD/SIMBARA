@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // ── Bangun workbook Excel ─────────────────────────────
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "SIMBARA";
+    workbook.creator = "SIPANDAI";
     workbook.created = new Date();
 
     const sheet = workbook.addWorksheet("Riwayat ATK");

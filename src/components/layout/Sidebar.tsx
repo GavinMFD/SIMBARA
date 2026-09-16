@@ -70,8 +70,8 @@ export default function Sidebar({ user }: { user?: any }) {
         {!collapsed && (
           <div className="flex items-center gap-3 overflow-hidden">
             <Image
-              src="/logo-simbara.png"
-              alt="Logo SIMBARA"
+              src="/logo-sipandai.png"
+              alt="Logo SIPANDAI"
               width={40}
               height={40}
               className="shrink-0 rounded-lg"
@@ -79,7 +79,7 @@ export default function Sidebar({ user }: { user?: any }) {
             />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold text-white tracking-wider">
-                SIMBARA
+                SIPANDAI
               </span>
               <span className="text-[10px] text-slate-400 font-semibold tracking-widest mt-0.5">
                 BPS Kota Palu

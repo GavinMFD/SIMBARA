@@ -275,9 +275,9 @@ export default function DetailAsetPage({
       {/* ── Print Header (Only visible when printing) ──────── */}
       <div className="hidden print:flex items-center justify-between border-b-2 border-black pb-4 mb-8">
         <div className="flex items-center gap-4">
-          <Image src="/logo-simbara.png" alt="Logo" width={50} height={50} className="grayscale" />
+          <Image src="/logo-sipandai.png" alt="Logo" width={50} height={50} className="grayscale" />
           <div>
-            <h1 className="text-xl font-bold text-black tracking-wider uppercase">SIMBARA</h1>
+            <h1 className="text-xl font-bold text-black tracking-wider uppercase">SIPANDAI</h1>
             <p className="text-sm text-gray-700">Sistem Informasi Manajemen BMN Terpadu</p>
           </div>
         </div>

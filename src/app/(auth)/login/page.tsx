@@ -26,8 +26,8 @@ export default function LoginPage() {
         <div className="mb-10 text-center relative z-10 flex flex-col items-center">
           <div className="h-16 w-16 mb-6 bg-white rounded-2xl p-2 shadow-lg shadow-black/20 flex items-center justify-center">
             <Image
-              src="/logo-simbara.png"
-              alt="Logo SIMBARA"
+              src="/logo-sipandai.png"
+              alt="Logo SIPANDAI"
               width={48}
               height={48}
               className="object-contain"
@@ -35,7 +35,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">Login Admin</h1>
           <p className="mt-2 text-sm text-slate-400">
-            Masuk ke panel manajemen SIMBARA
+            Masuk ke panel manajemen SIPANDAI
           </p>
         </div>
 

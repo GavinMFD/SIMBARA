@@ -12,11 +12,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "SIMBARA - Sistem Informasi Manajemen Barang",
-    template: "%s | SIMBARA",
+    default: "SIPANDAI - Sistem Informasi Pemantauan dan Tindak Lanjut Administrasi Internal",
+    template: "%s | SIPANDAI",
   },
   description:
-    "Sistem Informasi Manajemen Barang - Aplikasi pengelolaan aset dan barang milik negara",
+    "Sistem Informasi Pemantauan dan Tindak Lanjut Administrasi Internal - Aplikasi pengelolaan aset dan barang milik negara",
 };
 
 export default function RootLayout({

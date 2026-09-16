@@ -10,14 +10,14 @@ export default function LandingPage() {
       <header className="absolute top-0 left-0 w-full flex items-center justify-between px-6 md:px-12 py-6 z-50">
         <div className="flex items-center gap-3">
           <Image
-            src="/logo-simbara.png"
-            alt="Logo SIMBARA"
+            src="/logo-sipandai.png"
+            alt="Logo SIPANDAI"
             width={40}
             height={40}
             className="rounded-lg shadow-lg shadow-blue-500/20"
           />
           <div>
-            <h1 className="text-xl font-bold tracking-wider text-white leading-none">SIMBARA</h1>
+            <h1 className="text-xl font-bold tracking-wider text-white leading-none">SIPANDAI</h1>
             <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-1">BPS Kota Palu</p>
           </div>
         </div>
@@ -43,7 +43,7 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
             </span>
-            Portal Pegawai SIMBARA
+            Portal Pegawai SIPANDAI
           </div>
           
           <h2 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-500 tracking-tight">

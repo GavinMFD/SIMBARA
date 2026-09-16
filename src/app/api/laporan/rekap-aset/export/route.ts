@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "SIMBARA";
+    workbook.creator = "SIPANDAI";
     workbook.created = new Date();
 
     const periodeLabel = dari && sampai

@@ -91,13 +91,13 @@ export default function UbahPasswordPage() {
 
         <div className="mt-8 flex items-center justify-center gap-3 opacity-60">
           <Image
-            src="/logo-simbara.png"
-            alt="SIMBARA Logo"
+            src="/logo-sipandai.png"
+            alt="SIPANDAI Logo"
             width={24}
             height={24}
             className="rounded opacity-70 grayscale"
           />
-          <span className="text-xs font-semibold text-slate-500 tracking-wider">SIMBARA BPS KOTA PALU</span>
+          <span className="text-xs font-semibold text-slate-500 tracking-wider">SIPANDAI BPS KOTA PALU</span>
         </div>
       </div>
     </div>

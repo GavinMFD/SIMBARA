@@ -461,8 +461,8 @@ export default function PermintaanForm({ barangList = [], pegawaiList = [] }: Fo
         <div className="h-20 w-20 mb-6 rounded-full bg-gradient-to-tr from-blue-600 to-emerald-500 p-0.5 shadow-xl shadow-blue-500/20 relative">
           <div className="w-full h-full bg-[#0a2240] rounded-full flex items-center justify-center relative overflow-hidden">
             <Image
-              src="/logo-simbara.png"
-              alt="Logo SIMBARA"
+              src="/logo-sipandai.png"
+              alt="Logo SIPANDAI"
               fill
               className="object-contain p-3"
               priority

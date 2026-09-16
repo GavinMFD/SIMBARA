@@ -1,6 +1,6 @@
-# SIMBARA - Sistem Informasi Manajemen Barang
+# SIPANDAI - Sistem Informasi Pemantauan dan Tindak Lanjut Administrasi Internal
 
-SIMBARA adalah aplikasi web untuk pengelolaan aset dan barang inventaris berbasis **Next.js 16**, **Prisma ORM**, dan **Supabase (PostgreSQL & Auth)**.
+SIPANDAI adalah aplikasi web untuk pengelolaan aset dan barang inventaris berbasis **Next.js 16**, **Prisma ORM**, dan **Supabase (PostgreSQL & Auth)**.
 
 ---
 
@@ -37,8 +37,8 @@ Setiap anggota tim harus mengikuti langkah-langkah berikut untuk menjalankan apl
 
 Hubungi admin/owner repo untuk akses, kemudian jalankan:
 ```bash
-git clone https://github.com/GavinMFD/SIMBARA.git
-cd SIMBARA
+git clone https://github.com/GavinMFD/SIPANDAI.git
+cd SIPANDAI
 git checkout develop
 git pull origin develop
 ```
@@ -48,7 +48,7 @@ git pull origin develop
 Setiap developer direkomendasikan membuat project Supabase masing-masing untuk development agar tidak mengganggu database developer lain:
 
 1. Masuk ke **[Supabase Dashboard](https://database.new)** dan klik **New Project**.
-2. Masukkan nama project (misal: `simbara-dev-nama`), password database, dan pilih region terdekat (misal: *Singapore*).
+2. Masukkan nama project (misal: `sipandai-dev-nama`), password database, dan pilih region terdekat (misal: *Singapore*).
 3. Setelah project dibuat, masuk ke menu **Project Settings** > **Database** untuk mendapatkan **Connection String**:
    - Cari bagian **Connection string** -> **URI**.
    - Contoh URI: `postgresql://postgres.[username]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true` (Gunakan mode Connection Pooling jika menggunakan Prisma, atau Direct Connection di port 5432).
@@ -76,7 +76,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="[your-anon-key]"
 SUPABASE_SERVICE_ROLE_KEY="[your-service-role-key]"
 
 # Aplikasi
-NEXT_PUBLIC_APP_NAME="SIMBARA"
+NEXT_PUBLIC_APP_NAME="SIPANDAI"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
@@ -90,7 +90,7 @@ npx prisma generate
 
 ### 5. Sinkronisasi Skema Database (Prisma Migration)
 
-Migrasikan skema database SIMBARA ke database Supabase Anda:
+Migrasikan skema database SIPANDAI ke database Supabase Anda:
 ```bash
 # Untuk menerapkan skema pertama kali ke database Supabase
 npx prisma db push

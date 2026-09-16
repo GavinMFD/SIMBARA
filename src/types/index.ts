@@ -1,5 +1,5 @@
 // ============================================
-// TypeScript Types & Interfaces untuk SIMBARA
+// TypeScript Types & Interfaces untuk SIPANDAI
 // ============================================
 
 // Enums (mirror Prisma enums)

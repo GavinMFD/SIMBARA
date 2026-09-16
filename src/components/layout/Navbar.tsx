@@ -73,7 +73,7 @@ export default function Navbar({ user }: { user: any }) {
                   {user?.nama || "Alex Morgan"}
                 </p>
                 <p className="text-xs text-slate-400 truncate">
-                  {user?.email || "admin@simbara.id"}
+                  {user?.email || "admin@sipandai.id"}
                 </p>
               </div>
               <DropdownMenuSeparator className="bg-border" />
