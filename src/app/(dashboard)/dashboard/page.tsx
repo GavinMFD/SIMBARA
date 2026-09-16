@@ -55,25 +55,25 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      title: "TOTAL INVENTORY",
+      title: "TOTAL PERSEDIAAN",
       value: "1,240",
-      change: "+12% vs last month",
+      change: "+12% dari bulan lalu",
       changeType: "up",
       icon: Package,
       iconBg: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
     },
     {
-      title: "OUTGOING ITEMS",
+      title: "BARANG KELUAR",
       value: "482",
-      change: "-5% vs last month",
+      change: "-5% dari bulan lalu",
       changeType: "down",
       icon: ArrowUpRight,
       iconBg: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
     },
     {
-      title: "PHYSICAL ASSETS",
+      title: "ASET TETAP",
       value: "2,150",
-      change: "Stable this period",
+      change: "Stabil periode ini",
       changeType: "neutral",
       icon: Monitor,
       iconBg: "bg-slate-500/10 text-slate-400 border border-slate-500/20",
@@ -81,12 +81,12 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Low Stock Alert */}
       {!isLoadingLowStock && lowStockItems.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
-            <AlertTriangle className="text-red-500" size={20} />
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="h-8 w-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
+            <AlertTriangle className="text-red-500" size={16} />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-red-500 font-bold text-sm mb-1">
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       )}
 
       {/* Top Section / Metrics Row */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="bg-[#071829] border-border hover:border-blue-500/25 transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -122,8 +122,8 @@ export default function DashboardPage() {
                 <stat.icon size={18} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-extrabold text-white tracking-tight">
+            <CardContent className="pt-0 pb-3">
+              <div className="text-2xl font-extrabold text-white tracking-tight">
                 {stat.value}
               </div>
               <div className="flex items-center gap-1 mt-2 text-xs font-semibold">
@@ -158,16 +158,16 @@ export default function DashboardPage() {
         <Card className="bg-[#071829] border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
-              System Status
+              Status Sistem
             </span>
             <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              LIVE
+              AKTIF
             </span>
           </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold text-white tracking-tight">
-              Asset Health
+          <CardContent className="pt-0 pb-3">
+            <div className="text-base font-bold text-white tracking-tight">
+              Kondisi Aset
             </div>
             <div className="flex items-center gap-3 mt-3">
               {/* Fake user badges */}
@@ -192,7 +192,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Middle Row: Chart & Inventory IQ */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3">
         {/* Activity Chart Card */}
         <Card className="bg-[#071829] border-border lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -200,14 +200,14 @@ export default function DashboardPage() {
               <CardTitle className="text-base font-bold text-white">Aktivitas Persediaan</CardTitle>
               <p className="text-xs text-slate-500">Statistik pergerakan aset tahun anggaran 2024</p>
             </div>
-            <div className="flex items-center bg-[#030d1a] border border-border p-1 rounded-lg">
+            <div className="flex items-center bg-[#030d1a] border border-border p-1 rounded-md">
               <button
                 onClick={() => setActiveTab("yearly")}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                   activeTab === "yearly" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                Yearly
+                Tahunan
               </button>
               <button
                 onClick={() => setActiveTab("monthly")}
@@ -215,7 +215,7 @@ export default function DashboardPage() {
                   activeTab === "monthly" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                Monthly
+                Bulanan
               </button>
               <button
                 onClick={() => setActiveTab("weekly")}
@@ -223,13 +223,13 @@ export default function DashboardPage() {
                   activeTab === "weekly" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                Weekly
+                Mingguan
               </button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             {/* SVG Area Chart */}
-            <div className="relative h-60 w-full bg-[#030d1a]/50 rounded-xl border border-border/40 overflow-hidden px-2 pt-6">
+            <div className="relative h-48 w-full bg-[#030d1a]/50 rounded-xl border border-border/40 overflow-hidden px-2 pt-6">
               {/* Grid Lines */}
               <div className="absolute inset-0 flex flex-col justify-between py-6 pointer-events-none opacity-20">
                 <hr className="border-slate-700 w-full" />
@@ -277,7 +277,7 @@ export default function DashboardPage() {
               {/* Tooltip Overlay */}
               <div className="absolute top-[50px] left-[310px] flex flex-col items-center pointer-events-none">
                 <span className="px-2 py-1 text-[9px] font-bold text-white bg-blue-600 rounded shadow-lg border border-blue-400/30 whitespace-nowrap">
-                  DEC 2024 / 13,250
+                  DES 2024 / 13.250
                 </span>
                 <div className="w-1.5 h-1.5 bg-blue-600 rotate-45 -mt-1 shadow-lg"></div>
               </div>
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="text-slate-400 font-semibold">
-                Average daily inflow: <span className="text-white font-extrabold">4,320 units</span>
+                Rata-rata pemasukan: <span className="text-white font-extrabold">4.320 unit</span>
               </div>
             </div>
           </CardContent>
@@ -305,17 +305,17 @@ export default function DashboardPage() {
         {/* Inventory IQ Card */}
         <Card className="bg-[#071829] border-border flex flex-col justify-between">
           <CardHeader>
-            <div className="h-10 w-10 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-4">
-              <Zap size={20} className="fill-blue-400/20" />
+            <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-3">
+              <Zap size={16} className="fill-blue-400/20" />
             </div>
-            <CardTitle className="text-lg font-bold text-white">Inventory IQ</CardTitle>
-            <p className="text-sm text-slate-400 leading-relaxed mt-2">
-              Smart predictive tools for national demand forecasting and automated restock alerts. Launch the engine to see historical trends and future predictions.
+            <CardTitle className="text-base font-bold text-white">Prediksi Pintar (AI)</CardTitle>
+            <p className="text-[11px] text-slate-400 leading-relaxed mt-2">
+              Sistem prediksi pintar untuk estimasi kebutuhan dan notifikasi restock otomatis. Jalankan mesin untuk melihat tren riwayat dan prediksi ke depan.
             </p>
           </CardHeader>
           <CardContent className="pt-0 space-y-4">
-            <button className="w-full flex items-center justify-center gap-2 py-3 bg-white text-slate-950 font-bold rounded-lg hover:bg-slate-100 active:scale-98 transition-all">
-              Launch Engine <Zap size={16} className="fill-current" />
+            <button className="w-full flex items-center justify-center gap-2 py-2 text-sm bg-white text-slate-950 font-bold rounded-lg hover:bg-slate-100 active:scale-98 transition-all">
+              Jalankan Analisis <Zap size={14} className="fill-current" />
             </button>
             <div className="text-center text-[9px] font-bold text-slate-600 tracking-wider">
               POWERED BY BPS AI CORE
@@ -325,41 +325,41 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Row: Recent Activities, Stok Menipis, Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* Recent Activities */}
         <Card className="bg-[#071829] border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-sm font-bold text-white">Recent Activities</CardTitle>
+            <CardTitle className="text-sm font-bold text-white">Aktivitas Terakhir</CardTitle>
             <Link href="/laporan" className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-0.5">
-              View All <ChevronRight size={14} />
+              Lihat Semua <ChevronRight size={14} />
             </Link>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
-                <Package size={18} />
+              <div className="h-8 w-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
+                <Package size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate">Office Supplies Bulk</p>
+                <p className="text-xs font-bold text-white truncate">Pembelian Kertas HVS</p>
                 <p className="text-[10px] text-slate-500">24 Jan • 10:30 AM</p>
               </div>
               <span className="text-xs font-bold text-emerald-400 shrink-0">+2,450</span>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
-                <Truck size={18} />
+              <div className="h-8 w-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
+                <Truck size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate">Regional Distribution</p>
+                <p className="text-xs font-bold text-white truncate">Distribusi Bidang Sosial</p>
                 <p className="text-[10px] text-slate-500">23 Jan • 08:15 PM</p>
               </div>
               <span className="text-xs font-bold text-orange-400 shrink-0">-9,99</span>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
-                <Laptop size={18} />
+              <div className="h-8 w-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
+                <Laptop size={16} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white truncate">Laptop Dell Latitude</p>
@@ -383,7 +383,7 @@ export default function DashboardPage() {
               {isLoadingLowStock ? "..." : `${lowStockItems.length} ITEMS`}
             </span>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             {isLoadingLowStock ? (
               <div className="text-xs text-slate-400 text-center py-4">Memuat data...</div>
             ) : lowStockItems.length === 0 ? (
@@ -463,11 +463,11 @@ export default function DashboardPage() {
               © 2026 BPS INVENTORY MANAGEMENT SYSTEM
             </div>
             <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
-              <a href="#" className="hover:text-slate-300">HELP</a>
-              <a href="#" className="hover:text-slate-300">TERMS</a>
-              <a href="#" className="hover:text-slate-300">PRIVACY</a>
+              <a href="#" className="hover:text-slate-300">BANTUAN</a>
+              <a href="#" className="hover:text-slate-300">KETENTUAN</a>
+              <a href="#" className="hover:text-slate-300">PRIVASI</a>
               <a href="#" className="hover:text-slate-300 flex items-center gap-1">
-                <span>🌐</span> ENGLISH
+                <span>🌐</span> INDONESIA
               </a>
             </div>
           </div>
@@ -477,10 +477,10 @@ export default function DashboardPage() {
       {/* Floating Add Action Button */}
       <Link
         href="/barang/tambah"
-        className="fixed bottom-6 right-6 h-12 w-12 bg-blue-600 hover:bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 border border-blue-400/20 transition-all active:scale-95 hover:rotate-90"
+        className="fixed bottom-6 right-6 h-10 w-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 border border-blue-400/20 transition-all active:scale-95 hover:rotate-90"
         title="Input Cepat"
       >
-        <Plus size={24} />
+        <Plus size={20} />
       </Link>
     </div>
   );

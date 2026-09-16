@@ -44,7 +44,7 @@ export async function login(prevState: any, formData: FormData) {
     return { error: "Anda tidak memiliki akses ke halaman ini" };
   }
 
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function logout() {

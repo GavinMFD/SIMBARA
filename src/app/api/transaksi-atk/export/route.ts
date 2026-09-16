@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         masterBarang: { select: { namaBarang: true, satuan: true } },
+        pegawai: { select: { nama: true, unitKerja: true } }
       },
       orderBy: { tanggalPengambilan: "desc" },
     });
@@ -59,8 +60,8 @@ export async function GET(request: NextRequest) {
           month: "long",
           year: "numeric",
         }),
-        namaPegawai: trx.namaPegawai,
-        unitKerja: trx.unitKerja,
+        namaPegawai: trx.pegawai.nama,
+        unitKerja: trx.pegawai.unitKerja,
         namaBarang: trx.masterBarang.namaBarang,
         satuan: trx.masterBarang.satuan,
         qtyDiambil: trx.qtyDiambil,

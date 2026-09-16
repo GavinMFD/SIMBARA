@@ -12,7 +12,14 @@ export default async function PermintaanBarangPage() {
     stok: number;
   }
 
+  interface Pegawai {
+    id: string;
+    nama: string;
+    unitKerja: string;
+  }
+
   let barangList: Barang[] = [];
+  let pegawaiList: Pegawai[] = [];
   try {
     const items = await prisma.masterBarang.findMany({
       where: { isActive: true },
@@ -33,13 +40,22 @@ export default async function PermintaanBarangPage() {
         stok: stok,
       };
     });
+
+    const pegawais = await prisma.pegawai.findMany({
+      where: { isActive: true },
+      orderBy: { nama: "asc" },
+      select: { id: true, nama: true, unitKerja: true }
+    });
+    pegawaiList = pegawais;
   } catch (error) {
     console.error("Gagal mengambil data barang:", error);
   }
 
   return (
-    <div className="w-full">
-      <PermintaanForm barangList={barangList} />
+    <div className="min-h-screen bg-[#020b14] bg-grid-dots flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-2xl">
+        <PermintaanForm barangList={barangList} pegawaiList={pegawaiList} />
+      </div>
     </div>
   );
 }

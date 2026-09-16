@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const [mutasi, total] = await Promise.all([
       prisma.mutasiAset.findMany({
         include: {
-          aset: true,
+          aset: { include: { batchPembelian: true } },
           ruanganAsal: true,
           ruanganTujuan: true,
           pencatat: true,
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
           ruanganTujuanId: body.ruanganTujuanId,
           tanggalMutasi: new Date(body.tanggalMutasi),
           keterangan: body.keterangan || null,
-          dicatatOleh: body.dicatatOleh,
+          dicatatOleh: auth.user.id,
         },
         include: {
           aset: true,

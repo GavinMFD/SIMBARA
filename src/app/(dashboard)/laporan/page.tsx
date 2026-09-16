@@ -11,6 +11,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Users,
 } from "lucide-react";
 
 interface RuanganOption {
@@ -133,7 +134,7 @@ export default function LaporanPage() {
         </p>
         <h1 className="text-2xl font-bold text-white">Laporan & Ekspor</h1>
         <p className="text-sm text-slate-400 mt-0.5">
-          Cetak DIR, ekspor rekap ATK, dan laporan aset tetap
+          Cetak DIR, ekspor rekap Persediaan, dan laporan aset tetap
         </p>
       </div>
 
@@ -234,7 +235,7 @@ export default function LaporanPage() {
         </div>
       </div>
 
-      {/* ── Section 2: Rekap ATK Bulanan ──────────────────── */}
+      {/* ── Section 2: Rekap Persediaan Bulanan ──────────────────── */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] overflow-hidden">
         <div className="px-6 py-4 border-b border-[#0f2b48] flex items-center gap-3">
           <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400">
@@ -242,7 +243,7 @@ export default function LaporanPage() {
           </div>
           <div>
             <h2 className="text-base font-bold text-white">
-              Rekap ATK Bulanan
+              Rekap Persediaan Bulanan
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               US-034 — Qty & nilai masuk/keluar per No. Surat Belanja, diekspor ke Excel
@@ -369,6 +370,37 @@ export default function LaporanPage() {
               )
             }
           />
+        </div>
+      </div>
+
+      {/* ── Section 5: Rekap Pengambilan Persediaan per Pegawai ──── */}
+      <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[#0f2b48] flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-pink-500/15 text-pink-400">
+            <Users size={18} />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-white">
+              Rekap Pengambilan Persediaan Pegawai
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              US-049 — Lihat rincian dan total barang yang diambil oleh setiap pegawai
+            </p>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="mb-4 p-4 rounded-xl bg-pink-500/10 border border-pink-500/20">
+            <p className="text-xs text-pink-300">
+              Menampilkan laporan agregasi dari setiap pegawai yang mengambil Persediaan beserta dengan rincian jenis barang dan jumlahnya.
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.href = '/laporan/rekap-pegawai'}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl text-white transition-all shadow-lg bg-pink-600 hover:bg-pink-700 shadow-pink-600/20"
+          >
+            Lihat Laporan Pegawai
+          </button>
         </div>
       </div>
     </div>

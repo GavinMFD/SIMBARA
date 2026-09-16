@@ -11,22 +11,28 @@ import {
   Loader2,
   CheckCircle2,
   AlertTriangle,
-  PackageOpen,
   RefreshCw,
   FolderOpen,
+  Package,
+  ClipboardList
 } from "lucide-react";
 
-// ─── Interfaces ──────────────────────────────────────────────
-interface KategoriAset {
+type CategoryType = "aset" | "atk";
+
+interface KategoriItem {
   id: string;
   namaKategori: string;
-  _count: { batchPembelianAset: number };
+  _count?: {
+    batchPembelianAset?: number;
+    masterBarang?: number;
+  };
 }
 
 type ModalMode = "create" | "edit" | null;
 
-export default function KategoriAsetPage() {
-  const [kategoriList, setKategoriList] = useState<KategoriAset[]>([]);
+export default function UnifiedKategoriPage() {
+  const [activeTab, setActiveTab] = useState<CategoryType>("aset");
+  const [kategoriList, setKategoriList] = useState<KategoriItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -38,7 +44,7 @@ export default function KategoriAsetPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete state
-  const [deleteTarget, setDeleteTarget] = useState<KategoriAset | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<KategoriItem | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -46,17 +52,18 @@ export default function KategoriAsetPage() {
   const fetchKategori = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/kategori");
+      const endpoint = activeTab === "aset" ? "/api/kategori" : "/api/kategori-barang";
+      const res = await fetch(endpoint);
       const json = await res.json();
       if (json.success) {
         setKategoriList(json.data);
       }
     } catch (e) {
-      console.error("Fetch kategori error:", e);
+      console.error(`Fetch kategori ${activeTab} error:`, e);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => {
     fetchKategori();
@@ -75,7 +82,7 @@ export default function KategoriAsetPage() {
     setModalMode("create");
   };
 
-  const openEditModal = (k: KategoriAset) => {
+  const openEditModal = (k: KategoriItem) => {
     setFormName(k.namaKategori);
     setFormError("");
     setEditingId(k.id);
@@ -100,7 +107,8 @@ export default function KategoriAsetPage() {
     setIsSaving(true);
 
     try {
-      const url = modalMode === "edit" ? `/api/kategori/${editingId}` : "/api/kategori";
+      const endpoint = activeTab === "aset" ? "/api/kategori" : "/api/kategori-barang";
+      const url = modalMode === "edit" ? `${endpoint}/${editingId}` : endpoint;
       const method = modalMode === "edit" ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -126,7 +134,7 @@ export default function KategoriAsetPage() {
   };
 
   // ── Delete ─────────────────────────────────────────────────
-  const openDeleteDialog = (k: KategoriAset) => {
+  const openDeleteDialog = (k: KategoriItem) => {
     setDeleteTarget(k);
     setDeleteError("");
   };
@@ -137,7 +145,8 @@ export default function KategoriAsetPage() {
     setDeleteError("");
 
     try {
-      const res = await fetch(`/api/kategori/${deleteTarget.id}`, { method: "DELETE" });
+      const endpoint = activeTab === "aset" ? "/api/kategori" : "/api/kategori-barang";
+      const res = await fetch(`${endpoint}/${deleteTarget.id}`, { method: "DELETE" });
       const json = await res.json();
 
       if (!json.success) {
@@ -154,15 +163,20 @@ export default function KategoriAsetPage() {
     }
   };
 
+  const getRelationCount = (k: KategoriItem) => {
+    if (activeTab === "aset") return k._count?.batchPembelianAset || 0;
+    return k._count?.masterBarang || 0;
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Kategori Aset</p>
-          <h1 className="text-2xl font-bold text-white">Kategori Aset</h1>
+          <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Kategori</p>
+          <h1 className="text-2xl font-bold text-white">Master Kategori</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Kelola kategori pengelompokan aset tetap (Elektronik, Furniture, dll).
+            Kelola kategori untuk Aset Tetap maupun Barang Persediaan.
           </p>
         </div>
         <button
@@ -174,18 +188,42 @@ export default function KategoriAsetPage() {
         </button>
       </div>
 
+      {/* ── Tabs ──────────────────────────────────────── */}
+      <div className="flex border-b border-[#0f2b48]">
+        <button
+          onClick={() => { setActiveTab("aset"); setSearch(""); }}
+          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-all ${
+            activeTab === "aset" ? "border-blue-500 text-blue-400" : "border-transparent text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          <Package size={16} />
+          Kategori Aset Tetap
+        </button>
+        <button
+          onClick={() => { setActiveTab("atk"); setSearch(""); }}
+          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-all ${
+            activeTab === "atk" ? "border-blue-500 text-blue-400" : "border-transparent text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          <ClipboardList size={16} />
+          Kategori Persediaan
+        </button>
+      </div>
+
       {/* ── Search ──────────────────────────────────────── */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5">
         <div className="flex gap-3 items-end">
           <div className="flex-1 min-w-0 space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cari Kategori</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Cari Kategori {activeTab === "aset" ? "Aset" : "Persediaan"}
+            </label>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Ketik nama kategori..."
+                placeholder={`Ketik nama kategori ${activeTab}...`}
                 className="w-full pl-9 pr-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
@@ -208,7 +246,9 @@ export default function KategoriAsetPage() {
               <tr className="border-b border-[#0f2b48]">
                 <th className="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-12">No</th>
                 <th className="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Kategori</th>
-                <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Jumlah Pembelian</th>
+                <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {activeTab === "aset" ? "Jumlah Pembelian" : "Data Master Barang"}
+                </th>
                 <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Aksi</th>
               </tr>
             </thead>
@@ -237,47 +277,50 @@ export default function KategoriAsetPage() {
                   </td>
                 </tr>
               ) : (
-                filteredList.map((k, idx) => (
-                  <tr key={k.id} className="hover:bg-[#0a2240]/50 transition-colors group">
-                    <td className="px-5 py-4 text-sm text-slate-500 font-medium">{idx + 1}</td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400">
-                          <Tags size={14} />
+                filteredList.map((k, idx) => {
+                  const relCount = getRelationCount(k);
+                  return (
+                    <tr key={k.id} className="hover:bg-[#0a2240]/50 transition-colors group">
+                      <td className="px-5 py-4 text-sm text-slate-500 font-medium">{idx + 1}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400">
+                            <Tags size={14} />
+                          </div>
+                          <span className="text-sm font-semibold text-slate-200">{k.namaKategori}</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-200">{k.namaKategori}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                        k._count.batchPembelianAset > 0
-                          ? "bg-emerald-500/15 text-emerald-400"
-                          : "bg-slate-700/30 text-slate-500"
-                      }`}>
-                        {k._count.batchPembelianAset}
-                        <span className="font-normal">batch</span>
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => openEditModal(k)}
-                          className="p-2 rounded-lg text-slate-500 hover:bg-blue-500/15 hover:text-blue-400 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => openDeleteDialog(k)}
-                          className="p-2 rounded-lg text-slate-500 hover:bg-red-500/15 hover:text-red-400 transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          relCount > 0
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-slate-700/30 text-slate-500"
+                        }`}>
+                          {relCount}
+                          <span className="font-normal">{activeTab === "aset" ? "batch" : "barang"}</span>
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => openEditModal(k)}
+                            className="p-2 rounded-lg text-slate-500 hover:bg-blue-500/15 hover:text-blue-400 transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => openDeleteDialog(k)}
+                            className="p-2 rounded-lg text-slate-500 hover:bg-red-500/15 hover:text-red-400 transition-colors"
+                            title="Hapus"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -296,20 +339,15 @@ export default function KategoriAsetPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
           <div className="relative w-full max-w-md mx-4 rounded-2xl bg-[#071a2e] border border-[#0f2b48] shadow-2xl shadow-black/50 overflow-hidden">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#0f2b48]">
               <h2 className="text-lg font-bold text-white">
-                {modalMode === "edit" ? "Edit Kategori" : "Tambah Kategori Baru"}
+                {modalMode === "edit" ? "Edit Kategori" : `Tambah Kategori ${activeTab === "aset" ? "Aset" : "Persediaan"}`}
               </h2>
-              <button
-                onClick={closeModal}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-[#0f2b48] hover:text-white transition-colors"
-              >
+              <button onClick={closeModal} className="p-1.5 rounded-lg text-slate-400 hover:bg-[#0f2b48] hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>
 
-            {/* Body */}
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {formError && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-950/50 border border-red-800/40 text-sm text-red-300">
@@ -326,7 +364,7 @@ export default function KategoriAsetPage() {
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Contoh: Elektronik, Furniture, Kendaraan..."
+                  placeholder="Contoh: Elektronik, Tinta, dll..."
                   required
                   autoFocus
                   className="w-full px-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
@@ -334,20 +372,12 @@ export default function KategoriAsetPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-5 py-2.5 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-400 hover:text-white hover:border-slate-500 transition-colors font-semibold"
-                >
+                <button type="button" onClick={closeModal} className="px-5 py-2.5 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-400 hover:text-white transition-colors font-semibold">
                   Batal
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all"
-                >
+                <button type="submit" disabled={isSaving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all">
                   {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                  {modalMode === "edit" ? "Simpan Perubahan" : "Tambah Kategori"}
+                  Simpan Kategori
                 </button>
               </div>
             </form>
@@ -380,28 +410,21 @@ export default function KategoriAsetPage() {
                 </div>
               )}
 
-              {deleteTarget._count.batchPembelianAset > 0 && !deleteError && (
+              {getRelationCount(deleteTarget) > 0 && !deleteError && (
                 <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-950/40 border border-amber-800/30 text-sm text-amber-300/80">
                   <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-400" />
                   <span>
-                    Kategori ini memiliki <strong>{deleteTarget._count.batchPembelianAset}</strong> data pembelian terkait.
+                    Kategori ini memiliki <strong>{getRelationCount(deleteTarget)}</strong> data terkait.
                     Penghapusan mungkin akan ditolak.
                   </span>
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  onClick={() => { setDeleteTarget(null); setDeleteError(""); }}
-                  className="px-5 py-2.5 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-400 hover:text-white hover:border-slate-500 transition-colors font-semibold"
-                >
+                <button onClick={() => { setDeleteTarget(null); setDeleteError(""); }} className="px-5 py-2.5 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-400 hover:text-white transition-colors font-semibold">
                   Batal
                 </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-red-600/25 transition-all"
-                >
+                <button onClick={handleDelete} disabled={isDeleting} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-red-600/25 transition-all">
                   {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                   Hapus
                 </button>

@@ -17,6 +17,16 @@ export async function GET(_request: NextRequest) {
       orderBy: { nup: "asc" },
     });
 
+    // Ambil data PengaturanTtd
+    const [ttdKepala, ttdKasubag] = await Promise.all([
+      prisma.pengaturanTtd.findFirst({
+        where: { jenisJabatan: "kepala_bps", isActive: true },
+      }),
+      prisma.pengaturanTtd.findFirst({
+        where: { jenisJabatan: "kasubag", isActive: true },
+      }),
+    ]);
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "SIMBARA";
     workbook.created = new Date();
@@ -119,6 +129,22 @@ export async function GET(_request: NextRequest) {
       from: { row: 4, column: 1 },
       to: { row: lastRow, column: 12 },
     };
+
+    // ── TTD ────────────────────────────────────────────────
+    sheet.addRow([]);
+    sheet.addRow([]);
+    const rowTitle = sheet.addRow(["", "", "Mengetahui,", "", "", "", "", "", "", `Palu, ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`]);
+    const rowJabatan = sheet.addRow(["", "", ttdKepala?.jabatan ?? "Kepala BPS Kota Palu", "", "", "", "", "", "", ttdKasubag?.jabatan ?? "Kasubag Umum"]);
+    sheet.addRow([]);
+    sheet.addRow([]);
+    sheet.addRow([]);
+    const rowNama = sheet.addRow(["", "", ttdKepala?.namaPejabat ?? ".............................", "", "", "", "", "", "", ttdKasubag?.namaPejabat ?? "............................."]);
+    const rowNip = sheet.addRow(["", "", `NIP. ${ttdKepala?.nip ?? "..........................."}`, "", "", "", "", "", "", `NIP. ${ttdKasubag?.nip ?? "..........................."}`]);
+    rowNama.font = { bold: true, underline: true };
+    [rowTitle, rowJabatan, rowNama, rowNip].forEach(row => {
+      row.getCell(3).alignment = { horizontal: "center" };
+      row.getCell(10).alignment = { horizontal: "center" };
+    });
 
     const buffer = await workbook.xlsx.writeBuffer();
     const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");

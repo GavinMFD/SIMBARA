@@ -10,8 +10,9 @@ interface SelectedItem {
 }
 
 interface TransaksiAtkRequest {
-  namaPegawai: string;
-  unitKerja: string;
+  pegawaiId?: string;
+  namaPegawai?: string;
+  unitKerja?: string;
   tanggal: string;
   items: SelectedItem[];
 }
@@ -37,12 +38,19 @@ interface BatchRow {
 export async function POST(request: NextRequest) {
   try {
     const body: TransaksiAtkRequest = await request.json();
-    const { namaPegawai, unitKerja, items } = body;
+    const { pegawaiId, namaPegawai, unitKerja, items } = body;
 
     // ── Validasi input dasar ──────────────────────────────
-    if (!namaPegawai || !unitKerja || !items || items.length === 0) {
+    if ((!pegawaiId && !namaPegawai) || !items || items.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Data tidak lengkap." },
+        { success: false, error: "Data tidak lengkap. Pegawai dan barang harus diisi." },
+        { status: 400 }
+      );
+    }
+
+    if (!pegawaiId && (!namaPegawai?.trim() || !unitKerja?.trim())) {
+      return NextResponse.json(
+        { success: false, error: "Nama dan Unit Kerja wajib diisi jika pegawai baru." },
         { status: 400 }
       );
     }
@@ -56,10 +64,65 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Resolve Pegawai (Find existing or Create new) ────
+    let resolvedPegawaiId = pegawaiId;
+
+    if (!resolvedPegawaiId && namaPegawai) {
+      // Cari apakah pegawai dengan nama ini sudah ada (case insensitive)
+      const existingPegawai = await prisma.pegawai.findFirst({
+        where: {
+          nama: {
+            equals: namaPegawai.trim(),
+            mode: "insensitive"
+          }
+        }
+      });
+
+      if (existingPegawai) {
+        if (!existingPegawai.isActive) {
+           return NextResponse.json(
+            { success: false, error: "Pegawai dengan nama ini sudah ada namun statusnya tidak aktif." },
+            { status: 400 }
+          );
+        }
+        resolvedPegawaiId = existingPegawai.id;
+      } else {
+        // Buat record pegawai baru secara otomatis
+        const newPegawai = await prisma.pegawai.create({
+          data: {
+            nama: namaPegawai.trim(),
+            unitKerja: unitKerja!.trim(),
+            isActive: true,
+          }
+        });
+        resolvedPegawaiId = newPegawai.id;
+      }
+    }
+
+    if (!resolvedPegawaiId) {
+      return NextResponse.json(
+        { success: false, error: "Gagal menentukan identitas pegawai." },
+        { status: 400 }
+      );
+    }
+
+    // Pastikan pegawai exists dan aktif (jika id dikirim langsung dari select)
+    if (pegawaiId) {
+      const pegawai = await prisma.pegawai.findUnique({
+        where: { id: pegawaiId }
+      });
+
+      if (!pegawai || !pegawai.isActive) {
+        return NextResponse.json(
+          { success: false, error: "Pegawai tidak valid atau sudah tidak aktif." },
+          { status: 400 }
+        );
+      }
+    }
+
     // ══════════════════════════════════════════════════════
     // PRE-VALIDATION (Controller level)
     // Validasi qty ≤ stok tersedia SEBELUM masuk transaction.
-    // Ini memenuhi AC: "Validasi di Controller API sebelum eksekusi database."
     // ══════════════════════════════════════════════════════
     for (const item of items) {
       const batches = await prisma.batchSuratBelanja.findMany({
@@ -91,8 +154,6 @@ export async function POST(request: NextRequest) {
 
     // ══════════════════════════════════════════════════════
     // TRANSACTION — Atomic FIFO stock deduction
-    // Menggunakan FOR UPDATE row-locking + atomic SQL update
-    // untuk mencegah race condition saat 2 pegawai submit bersamaan.
     // ══════════════════════════════════════════════════════
     const waktuSubmit = new Date();
 
@@ -101,8 +162,6 @@ export async function POST(request: NextRequest) {
 
       for (const item of items) {
         // ── 1. Lock & ambil batch FIFO dengan FOR UPDATE ──
-        // FOR UPDATE mengunci baris sehingga transaksi lain harus menunggu,
-        // mencegah dua transaksi membaca sisa_qty yang sama secara bersamaan.
         const batches = await tx.$queryRaw<BatchRow[]>`
           SELECT id, sisa_qty, harga_satuan
           FROM batch_surat_belanja
@@ -112,7 +171,7 @@ export async function POST(request: NextRequest) {
           FOR UPDATE
         `;
 
-        // ── 2. Validasi ulang stok (safeguard di dalam transaction) ──
+        // ── 2. Validasi ulang stok ──
         const totalStok = batches.reduce((sum, b) => sum + Number(b.sisa_qty), 0);
         if (totalStok < item.quantity) {
           const barang = await tx.masterBarang.findUnique({
@@ -125,12 +184,11 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // ── 3. Buat record TransaksiAtk ──
+        // ── 3. Buat record TransaksiAtk dengan resolvedPegawaiId ──
         const transaksi = await tx.transaksiAtk.create({
           data: {
             masterBarangId: item.barangId,
-            namaPegawai,
-            unitKerja,
+            pegawaiId: resolvedPegawaiId!,
             qtyDiambil: item.quantity,
             tanggalPengambilan: waktuSubmit,
           },
@@ -147,9 +205,6 @@ export async function POST(request: NextRequest) {
           const dipakai = Math.min(sisaQtyBatch, sisaQtyDibutuhkan);
           sisaQtyDibutuhkan -= dipakai;
 
-          // Atomic update: `sisa_qty = sisa_qty - N` langsung di SQL.
-          // Ini menghindari stale read — nilai dikurangi berdasarkan state terkini di DB.
-          // WHERE sisa_qty >= N sebagai safeguard agar sisa_qty tidak pernah < 0.
           const rowsAffected = await tx.$executeRaw`
             UPDATE batch_surat_belanja
             SET sisa_qty = sisa_qty - ${dipakai}
@@ -158,8 +213,6 @@ export async function POST(request: NextRequest) {
           `;
 
           if (rowsAffected === 0) {
-            // Race condition terdeteksi: sisa_qty sudah berubah sejak di-lock.
-            // Rollback seluruh transaksi.
             throw new StokTidakCukupError(
               "Stok berubah saat proses berlangsung. Silakan coba lagi."
             );
@@ -179,7 +232,6 @@ export async function POST(request: NextRequest) {
         }
 
         // ── 6. Sync stokAktual on MasterBarang ──
-        // Recalculate total from all batches to keep stokAktual consistent.
         const stokResult = await tx.batchSuratBelanja.aggregate({
           _sum: { sisaQty: true },
           where: { masterBarangId: item.barangId },
@@ -195,7 +247,6 @@ export async function POST(request: NextRequest) {
 
       return results;
     }, {
-      // Timeout lebih panjang untuk menangani multiple items + row locking
       timeout: 15000,
     });
 
@@ -207,7 +258,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    // ── Error handling terpisah: 400 vs 500 ──
     if (error instanceof StokTidakCukupError) {
       return NextResponse.json(
         { success: false, error: error.message },
@@ -240,12 +290,16 @@ export async function GET(request: NextRequest) {
     // ── Build filter where clause ──
     const where: Prisma.TransaksiAtkWhereInput = {};
 
-    if (namaPegawai) {
-      where.namaPegawai = { contains: namaPegawai, mode: "insensitive" };
+    if (namaPegawai || unitKerja) {
+      where.pegawai = {};
+      if (namaPegawai) {
+        where.pegawai.nama = { contains: namaPegawai, mode: "insensitive" };
+      }
+      if (unitKerja) {
+        where.pegawai.unitKerja = unitKerja;
+      }
     }
-    if (unitKerja) {
-      where.unitKerja = unitKerja;
-    }
+
     if (startDate || endDate) {
       where.tanggalPengambilan = {};
       if (startDate) {
@@ -256,22 +310,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── Group transaksi by namaPegawai + tanggal + unitKerja ──
-    // karena 1 submit bisa menghasilkan multiple TransaksiAtk (per barang)
-    // Ambil semua untuk di-group di application level
+    // ── Group transaksi by pegawaiId + tanggal ──
     if (isExport) {
       const allTransaksi = await prisma.transaksiAtk.findMany({
         where,
         include: {
           masterBarang: { select: { namaBarang: true, satuan: true } },
+          pegawai: { select: { nama: true, unitKerja: true } }
         },
         orderBy: { tanggalPengambilan: "desc" },
       });
 
-      // Group by pegawai + tanggal + unit
       const grouped = groupTransaksi(allTransaksi);
 
-      // Build Excel-like CSV
       const csvHeader = "No,Nama Pegawai,Tanggal,Unit/Bidang,Daftar Barang,Total Item\n";
       const csvRows = grouped.map((row, i) => {
         const barangList = row.items.map((it: any) => `${it.namaBarang} (${it.qty})`).join("; ");
@@ -299,6 +350,7 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         masterBarang: { select: { namaBarang: true, satuan: true } },
+        pegawai: { select: { nama: true, unitKerja: true } }
       },
       orderBy: { tanggalPengambilan: "desc" },
     });
@@ -307,7 +359,6 @@ export async function GET(request: NextRequest) {
     const total = grouped.length;
     const paginated = grouped.slice((page - 1) * pageSize, page * pageSize);
 
-    // ── Stats: total bulan ini ──
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const totalBulanIni = await prisma.transaksiAtk.count({
@@ -339,16 +390,15 @@ function groupTransaksi(transaksiList: any[]) {
   const map = new Map<string, any>();
 
   for (const t of transaksiList) {
-    // Group key: namaPegawai + unitKerja + rounded-to-minute timestamp
     const roundedTime = new Date(t.tanggalPengambilan);
     roundedTime.setSeconds(0, 0);
-    const key = `${t.namaPegawai}__${t.unitKerja}__${roundedTime.toISOString()}`;
+    const key = `${t.pegawaiId}__${roundedTime.toISOString()}`;
 
     if (!map.has(key)) {
       map.set(key, {
         id: t.id,
-        namaPegawai: t.namaPegawai,
-        unitKerja: t.unitKerja,
+        namaPegawai: t.pegawai?.nama ?? "-",
+        unitKerja: t.pegawai?.unitKerja ?? "-",
         tanggal: t.tanggalPengambilan,
         items: [],
       });

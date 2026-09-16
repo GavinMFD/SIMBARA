@@ -187,10 +187,10 @@ export default function RiwayatAtkPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Log ATK</p>
-          <h1 className="text-2xl font-bold text-white">Riwayat Pengambilan ATK</h1>
+          <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Log Persediaan</p>
+          <h1 className="text-2xl font-bold text-white">Riwayat Pengambilan Persediaan</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Pantau aktivitas distribusi Alat Tulis Kantor secara real-time.
+            Pantau aktivitas distribusi Persediaan secara real-time.
           </p>
         </div>
         <button

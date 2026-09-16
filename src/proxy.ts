@@ -39,6 +39,7 @@ export async function proxy(request: NextRequest) {
     "/barang",
     "/kategori",
     "/ruangan",
+    "/pegawai",
     "/mutasi",
     "/laporan",
     "/pengguna",
@@ -50,9 +51,9 @@ export async function proxy(request: NextRequest) {
       request.nextUrl.pathname.startsWith(path + "/")
   );
 
-  // Dashboard root is also protected
+  // Dashboard and other paths are protected
   if (
-    (isProtected || request.nextUrl.pathname === "/") &&
+    isProtected &&
     !user
   ) {
     const url = request.nextUrl.clone();

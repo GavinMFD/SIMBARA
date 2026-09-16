@@ -15,7 +15,9 @@ import {
   Building2,
   MapPin,
   Package,
+  Printer,
 } from "lucide-react";
+import Link from "next/link";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
 // ─── Interfaces ──────────────────────────────────────────────
@@ -356,6 +358,14 @@ export default function RuanganPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-center gap-1">
+                        <Link
+                          href={`/laporan/dir?ruanganId=${r.id}`}
+                          target="_blank"
+                          className="p-2 rounded-lg text-slate-500 hover:bg-emerald-500/15 hover:text-emerald-400 transition-colors"
+                          title="Cetak DIR"
+                        >
+                          <Printer size={15} />
+                        </Link>
                         <button
                           onClick={() => openEditDialog(r)}
                           className="p-2 rounded-lg text-slate-500 hover:bg-blue-500/15 hover:text-blue-400 transition-colors"

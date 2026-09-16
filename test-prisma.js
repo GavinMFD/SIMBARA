@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 require('dotenv').config({ path: '.env.local' });
 
 async function run() {
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({});
   try {
     await prisma.$connect();
     console.log("Prisma connected successfully!");

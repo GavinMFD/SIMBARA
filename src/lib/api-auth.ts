@@ -54,3 +54,26 @@ export async function requireAdminOrKasubag(): Promise<AuthResult> {
     user,
   };
 }
+
+/**
+ * Memastikan request memiliki session valid dan HANYA role super_admin.
+ */
+export async function requireSuperAdmin(): Promise<AuthResult> {
+  const result = await requireAdminOrKasubag();
+  
+  if (!result.isAuthorized || !result.user) {
+    return result;
+  }
+
+  if (result.user.role !== "super_admin") {
+    return {
+      isAuthorized: false,
+      errorResponse: NextResponse.json(
+        { success: false, error: "Forbidden. Hanya super_admin yang dapat mengakses fitur ini." },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return result;
+}

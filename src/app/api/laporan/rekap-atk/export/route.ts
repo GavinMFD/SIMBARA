@@ -34,17 +34,27 @@ export async function GET(request: NextRequest) {
       orderBy: { tanggalBelanja: "asc" },
     });
 
+    // Ambil data PengaturanTtd untuk TTD excel
+    const [ttdKepala, ttdKasubag] = await Promise.all([
+      prisma.pengaturanTtd.findFirst({
+        where: { jenisJabatan: "kepala_bps", isActive: true },
+      }),
+      prisma.pengaturanTtd.findFirst({
+        where: { jenisJabatan: "kasubag", isActive: true },
+      }),
+    ]);
+
     // ── Build workbook ─────────────────────────────────────
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "SIMBARA";
     workbook.created = new Date();
 
-    const sheet = workbook.addWorksheet("Rekap ATK");
+    const sheet = workbook.addWorksheet("Rekap Persediaan");
 
     // ── Title rows ─────────────────────────────────────────
     sheet.mergeCells("A1:J1");
     const titleCell = sheet.getCell("A1");
-    titleCell.value = "REKAPITULASI PERSEDIAAN ATK";
+    titleCell.value = "REKAPITULASI PERSEDIAAN";
     titleCell.font = { bold: true, size: 14 };
     titleCell.alignment = { horizontal: "center" };
 
@@ -165,6 +175,68 @@ export async function GET(request: NextRequest) {
     };
     [8, 10, 12].forEach((col) => {
       totalRow.getCell(col).numFmt = currencyFmt;
+    });
+
+    // ── TTD (Tanda Tangan) ─────────────────────────────────
+    sheet.addRow([]);
+    sheet.addRow([]);
+    const ttdRowTitle = sheet.addRow([
+      "",
+      "",
+      "Mengetahui,",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      `Palu, ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`,
+    ]);
+    const ttdRowJabatan = sheet.addRow([
+      "",
+      "",
+      ttdKepala?.jabatan ?? "Kepala BPS Kota Palu",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ttdKasubag?.jabatan ?? "Kasubag Umum",
+    ]);
+    sheet.addRow([]);
+    sheet.addRow([]);
+    sheet.addRow([]);
+    const ttdRowNama = sheet.addRow([
+      "",
+      "",
+      ttdKepala?.namaPejabat ?? ".............................",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ttdKasubag?.namaPejabat ?? ".............................",
+    ]);
+    const ttdRowNip = sheet.addRow([
+      "",
+      "",
+      `NIP. ${ttdKepala?.nip ?? "..........................."}`,
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      `NIP. ${ttdKasubag?.nip ?? "..........................."}`,
+    ]);
+
+    ttdRowNama.font = { bold: true, underline: true };
+    // Merge cells for alignment if needed, but centering in the column is fine for now
+    [ttdRowTitle, ttdRowJabatan, ttdRowNama, ttdRowNip].forEach(row => {
+      row.getCell(3).alignment = { horizontal: "center" };
+      row.getCell(10).alignment = { horizontal: "center" };
     });
 
     // ── Auto-filter ────────────────────────────────────────

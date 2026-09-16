@@ -51,7 +51,7 @@ export async function POST(
           kondisiBaru: body.kondisiBaru,
           tanggalPerubahan: new Date(body.tanggalPerubahan || new Date()),
           keterangan: body.keterangan.trim(),
-          dicatatOleh: body.dicatatOleh,
+          dicatatOleh: auth.user!.id,
         },
       }),
       prisma.masterAset.update({

@@ -35,6 +35,16 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    // Ambil data PengaturanTtd
+    const [ttdKepala, ttdKasubag] = await Promise.all([
+      prisma.pengaturanTtd.findFirst({
+        where: { jenisJabatan: "kepala_bps", isActive: true },
+      }),
+      prisma.pengaturanTtd.findFirst({
+        where: { jenisJabatan: "kasubag", isActive: true },
+      }),
+    ]);
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "SIMBARA";
     workbook.created = new Date();
@@ -87,6 +97,22 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // ── TTD Mutasi Sheet ─────────────────────────────────
+    mutasiSheet.addRow([]);
+    mutasiSheet.addRow([]);
+    const mRowTitle = mutasiSheet.addRow(["", "Mengetahui,", "", "", "", "", `Palu, ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`]);
+    const mRowJabatan = mutasiSheet.addRow(["", ttdKepala?.jabatan ?? "Kepala BPS Kota Palu", "", "", "", "", ttdKasubag?.jabatan ?? "Kasubag Umum"]);
+    mutasiSheet.addRow([]);
+    mutasiSheet.addRow([]);
+    mutasiSheet.addRow([]);
+    const mRowNama = mutasiSheet.addRow(["", ttdKepala?.namaPejabat ?? ".............................", "", "", "", "", ttdKasubag?.namaPejabat ?? "............................."]);
+    const mRowNip = mutasiSheet.addRow(["", `NIP. ${ttdKepala?.nip ?? "..........................."}`, "", "", "", "", `NIP. ${ttdKasubag?.nip ?? "..........................."}`]);
+    mRowNama.font = { bold: true, underline: true };
+    [mRowTitle, mRowJabatan, mRowNama, mRowNip].forEach(row => {
+      row.getCell(2).alignment = { horizontal: "center" };
+      row.getCell(7).alignment = { horizontal: "center" };
+    });
+
     // ── Sheet 2: Rekap Kondisi ─────────────────────────────
     const KONDISI_MAP: Record<string, string> = {
       baik: "Baik",
@@ -135,6 +161,22 @@ export async function GET(request: NextRequest) {
       if (i % 2 === 1) {
         row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
       }
+    });
+
+    // ── TTD Kondisi Sheet ─────────────────────────────────
+    kondisiSheet.addRow([]);
+    kondisiSheet.addRow([]);
+    const kRowTitle = kondisiSheet.addRow(["", "Mengetahui,", "", "", "", `Palu, ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`]);
+    const kRowJabatan = kondisiSheet.addRow(["", ttdKepala?.jabatan ?? "Kepala BPS Kota Palu", "", "", "", ttdKasubag?.jabatan ?? "Kasubag Umum"]);
+    kondisiSheet.addRow([]);
+    kondisiSheet.addRow([]);
+    kondisiSheet.addRow([]);
+    const kRowNama = kondisiSheet.addRow(["", ttdKepala?.namaPejabat ?? ".............................", "", "", "", ttdKasubag?.namaPejabat ?? "............................."]);
+    const kRowNip = kondisiSheet.addRow(["", `NIP. ${ttdKepala?.nip ?? "..........................."}`, "", "", "", `NIP. ${ttdKasubag?.nip ?? "..........................."}`]);
+    kRowNama.font = { bold: true, underline: true };
+    [kRowTitle, kRowJabatan, kRowNama, kRowNip].forEach(row => {
+      row.getCell(2).alignment = { horizontal: "center" };
+      row.getCell(6).alignment = { horizontal: "center" };
     });
 
     const buffer = await workbook.xlsx.writeBuffer();

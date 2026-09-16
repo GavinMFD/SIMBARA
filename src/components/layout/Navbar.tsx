@@ -22,18 +22,10 @@ export default function Navbar({ user }: { user: any }) {
   };
 
   return (
-    <header className="flex h-20 items-center justify-between border-b border-border bg-[#030d1a] px-6 print:hidden">
-      {/* Left: Search Box */}
-      <div className="relative flex items-center w-full max-w-lg">
-        <Search size={16} className="absolute left-3.5 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search asset inventory, serial numbers, or reports..."
-          className="w-full pl-10 pr-16 py-2.5 bg-[#071829] border border-border/60 hover:border-blue-500/40 focus:border-blue-500 rounded-lg text-sm text-slate-200 outline-none placeholder:text-slate-500 transition-all"
-        />
-        <kbd className="absolute right-3 inline-flex items-center gap-0.5 rounded border border-border bg-[#030d1a] px-1.5 font-mono text-[10px] font-medium text-slate-500 select-none pointer-events-none">
-          <span className="text-xs">⌘</span>K
-        </kbd>
+    <header className="flex h-16 items-center justify-between border-b border-border bg-[#030d1a] px-5 print:hidden">
+      {/* Left: Branding or empty space */}
+      <div className="relative flex items-center">
+        {/* Removed search bar */}
       </div>
 
       {/* Right: Actions & User */}

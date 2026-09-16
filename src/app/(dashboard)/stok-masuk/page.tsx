@@ -17,6 +17,8 @@ import {
   FileText,
   TrendingUp,
   PackageOpen,
+  Trash2,
+  Eye,
 } from "lucide-react";
 
 // ─── Interfaces ──────────────────────────────────────────────
@@ -38,21 +40,11 @@ interface BatchRow {
   pencatat: { nama: string };
 }
 
-interface FormData {
+interface StokMasukItem {
   masterBarangId: string;
-  noSuratBelanja: string;
-  tanggalBelanja: string;
   hargaSatuan: number | string;
   qtyMasuk: number | string;
 }
-
-const INITIAL_FORM: FormData = {
-  masterBarangId: "",
-  noSuratBelanja: "",
-  tanggalBelanja: new Date().toISOString().slice(0, 10),
-  hargaSatuan: "",
-  qtyMasuk: "",
-};
 
 export default function StokMasukPage() {
   const PAGE_SIZE = 10;
@@ -80,7 +72,10 @@ export default function StokMasukPage() {
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [noSuratBelanja, setNoSuratBelanja] = useState("");
+  const [tanggalBelanja, setTanggalBelanja] = useState(new Date().toISOString().slice(0, 10));
+  const [items, setItems] = useState<StokMasukItem[]>([{ masterBarangId: "", hargaSatuan: "", qtyMasuk: "" }]);
+  
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -156,21 +151,60 @@ export default function StokMasukPage() {
 
   // ── Modal Handlers ─────────────────────────────────────
   const openModal = () => {
-    setFormData(INITIAL_FORM);
+    setNoSuratBelanja("");
+    setTanggalBelanja(new Date().toISOString().slice(0, 10));
+    setItems([{ masterBarangId: "", hargaSatuan: "", qtyMasuk: "" }]);
     setFormError("");
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setFormData(INITIAL_FORM);
     setFormError("");
+  };
+
+  const handleAddItem = () => {
+    setItems([...items, { masterBarangId: "", hargaSatuan: "", qtyMasuk: "" }]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setItems(newItems);
+  };
+
+  const handleItemChange = (index: number, field: keyof StokMasukItem, value: any) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
   };
 
   // ── Submit Form ────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
+
+    if (!noSuratBelanja.trim() || !tanggalBelanja) {
+      setFormError("No Surat Belanja dan Tanggal wajib diisi.");
+      return;
+    }
+
+    if (items.length === 0) {
+      setFormError("Minimal satu barang harus ditambahkan.");
+      return;
+    }
+
+    const payloadItems = items.map((item, idx) => {
+      const harga = Number(item.hargaSatuan);
+      const qty = Number(item.qtyMasuk);
+
+      if (!item.masterBarangId) throw new Error(`Barang pada baris ke-${idx + 1} belum dipilih.`);
+      if (!harga || harga <= 0) throw new Error(`Harga satuan pada baris ke-${idx + 1} harus lebih dari 0.`);
+      if (!qty || qty <= 0) throw new Error(`Qty pada baris ke-${idx + 1} harus lebih dari 0.`);
+
+      return { masterBarangId: item.masterBarangId, hargaSatuan: harga, qtyMasuk: qty };
+    });
+
     setIsSaving(true);
 
     try {
@@ -178,11 +212,9 @@ export default function StokMasukPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          masterBarangId: formData.masterBarangId,
-          noSuratBelanja: formData.noSuratBelanja,
-          tanggalBelanja: formData.tanggalBelanja,
-          hargaSatuan: Number(formData.hargaSatuan),
-          qtyMasuk: Number(formData.qtyMasuk),
+          noSuratBelanja,
+          tanggalBelanja,
+          items: payloadItems,
         }),
       });
 
@@ -195,8 +227,8 @@ export default function StokMasukPage() {
 
       closeModal();
       fetchBatches(appliedFilter, page);
-    } catch (e) {
-      setFormError("Gagal menyimpan. Periksa koneksi Anda.");
+    } catch (e: any) {
+      setFormError(e.message || "Gagal menyimpan. Periksa koneksi Anda.");
     } finally {
       setIsSaving(false);
     }
@@ -339,6 +371,7 @@ export default function StokMasukPage() {
                 <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Sisa Qty</th>
                 <th className="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Nilai Sisa (Rp)</th>
                 <th className="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Dicatat Oleh</th>
+                <th className="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#0a2240]">
@@ -354,11 +387,12 @@ export default function StokMasukPage() {
                     <td className="px-5 py-4"><div className="h-4 w-10 bg-[#0f2b48] rounded mx-auto" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-24 bg-[#0f2b48] rounded ml-auto" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-20 bg-[#0f2b48] rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-6 w-6 bg-[#0f2b48] rounded mx-auto" /></td>
                   </tr>
                 ))
               ) : batches.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-16 text-center">
+                  <td colSpan={10} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-600">
                       <PackageOpen size={40} strokeWidth={1} />
                       <p className="text-sm font-medium">Belum ada data stok masuk</p>
@@ -414,6 +448,15 @@ export default function StokMasukPage() {
                         {formatCurrency(Number(b.hargaSatuan) * b.sisaQty)}
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-400">{b.pencatat.nama}</td>
+                      <td className="px-5 py-4 text-center">
+                        <button
+                          onClick={() => window.location.href = `/stok-masuk/${b.id}`}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-950/50 transition-colors"
+                          title="Lihat Detail Batch"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
@@ -523,10 +566,13 @@ export default function StokMasukPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
 
-          <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-[#071a2e] border border-[#0f2b48] shadow-2xl shadow-black/50 overflow-hidden">
+          <div className="relative w-full max-w-3xl mx-4 rounded-2xl bg-[#071a2e] border border-[#0f2b48] shadow-2xl shadow-black/50 overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#0f2b48]">
-              <h2 className="text-lg font-bold text-white">Catat Stok Masuk</h2>
+              <div>
+                <h2 className="text-lg font-bold text-white">Catat Stok Masuk Massal</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Input banyak barang sekaligus untuk 1 Nomor Surat Belanja.</p>
+              </div>
               <button
                 onClick={closeModal}
                 className="p-1.5 rounded-lg text-slate-400 hover:bg-[#0f2b48] hover:text-white transition-colors"
@@ -536,7 +582,7 @@ export default function StokMasukPage() {
             </div>
 
             {/* Body */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
               {formError && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-950/50 border border-red-800/40 text-sm text-red-300">
                   <AlertTriangle size={16} className="shrink-0 text-red-400" />
@@ -544,30 +590,7 @@ export default function StokMasukPage() {
                 </div>
               )}
 
-              {/* Barang */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Barang <span className="text-red-400">*</span>
-                </label>
-                <div className="relative">
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                  <select
-                    value={formData.masterBarangId}
-                    onChange={(e) => setFormData((f) => ({ ...f, masterBarangId: e.target.value }))}
-                    required
-                    className="w-full pl-4 pr-9 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none transition-colors"
-                  >
-                    <option value="">Pilih barang...</option>
-                    {barangOptions.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.namaBarang} ({b.satuan})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* No Surat Belanja & Tanggal */}
+              {/* No Surat Belanja & Tanggal (Umum) */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -575,8 +598,8 @@ export default function StokMasukPage() {
                   </label>
                   <input
                     type="text"
-                    value={formData.noSuratBelanja}
-                    onChange={(e) => setFormData((f) => ({ ...f, noSuratBelanja: e.target.value }))}
+                    value={noSuratBelanja}
+                    onChange={(e) => setNoSuratBelanja(e.target.value)}
                     placeholder="SB-2026-001"
                     required
                     className="w-full px-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
@@ -588,8 +611,8 @@ export default function StokMasukPage() {
                   </label>
                   <input
                     type="date"
-                    value={formData.tanggalBelanja}
-                    onChange={(e) => setFormData((f) => ({ ...f, tanggalBelanja: e.target.value }))}
+                    value={tanggalBelanja}
+                    onChange={(e) => setTanggalBelanja(e.target.value)}
                     required
                     className="w-full px-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                     style={{ colorScheme: "dark" }}
@@ -597,66 +620,117 @@ export default function StokMasukPage() {
                 </div>
               </div>
 
-              {/* Harga Satuan & Qty */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+              {/* Garis Pembatas */}
+              <div className="border-t border-[#0f2b48]"></div>
+
+              {/* Daftar Barang */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Harga Satuan (Rp) <span className="text-red-400">*</span>
+                    Daftar Barang <span className="text-red-400">*</span>
                   </label>
-                  <input
-                    type="number"
-                    value={formData.hargaSatuan}
-                    onChange={(e) => setFormData((f) => ({ ...f, hargaSatuan: e.target.value }))}
-                    placeholder="45000"
-                    min={1}
-                    required
-                    className="w-full px-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
-                  />
+                  <button
+                    type="button"
+                    onClick={handleAddItem}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    <Plus size={16} /> Tambah Baris
+                  </button>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Qty Masuk <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.qtyMasuk}
-                    onChange={(e) => setFormData((f) => ({ ...f, qtyMasuk: e.target.value }))}
-                    placeholder="10"
-                    min={1}
-                    required
-                    className="w-full px-4 py-2.5 bg-[#0a2240] border border-[#143550] rounded-xl text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
-                  />
+
+                <div className="space-y-3">
+                  {items.map((item, index) => (
+                    <div key={index} className="flex flex-wrap sm:flex-nowrap gap-3 items-end p-4 rounded-xl bg-[#0a2240] border border-[#143550]">
+                      {/* Barang Select */}
+                      <div className="flex-1 min-w-[200px] space-y-1.5">
+                        <label className="text-xs text-slate-400">Barang</label>
+                        <div className="relative">
+                          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                          <select
+                            value={item.masterBarangId}
+                            onChange={(e) => handleItemChange(index, "masterBarangId", e.target.value)}
+                            required
+                            className="w-full pl-4 pr-9 py-2 bg-[#041424] border border-[#0f2b48] rounded-lg text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none transition-colors"
+                          >
+                            <option value="">Pilih barang...</option>
+                            {barangOptions.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.namaBarang} ({b.satuan})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Harga Satuan */}
+                      <div className="w-full sm:w-32 space-y-1.5">
+                        <label className="text-xs text-slate-400">Harga (Rp)</label>
+                        <input
+                          type="number"
+                          value={item.hargaSatuan}
+                          onChange={(e) => handleItemChange(index, "hargaSatuan", e.target.value)}
+                          placeholder="Harga"
+                          min={1}
+                          required
+                          className="w-full px-3 py-2 bg-[#041424] border border-[#0f2b48] rounded-lg text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                      </div>
+
+                      {/* Qty */}
+                      <div className="w-full sm:w-24 space-y-1.5">
+                        <label className="text-xs text-slate-400">Qty Masuk</label>
+                        <input
+                          type="number"
+                          value={item.qtyMasuk}
+                          onChange={(e) => handleItemChange(index, "qtyMasuk", e.target.value)}
+                          placeholder="Qty"
+                          min={1}
+                          required
+                          className="w-full px-3 py-2 bg-[#041424] border border-[#0f2b48] rounded-lg text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                      </div>
+
+                      {/* Delete Button */}
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="p-2.5 mb-0.5 rounded-lg text-slate-400 hover:bg-red-950/50 hover:text-red-400 transition-colors"
+                          title="Hapus baris"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
+            </form>
 
-              {/* Info box */}
-              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-blue-950/30 border border-blue-800/30 text-xs text-blue-300/80">
-                <Package size={14} className="shrink-0 mt-0.5 text-blue-400" />
-                <span>
-                  Setiap pencatatan menghasilkan <strong>batch baru</strong> yang terpisah.
-                  Stok total barang = jumlah sisa qty dari semua batch.
-                </span>
+            {/* Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#0f2b48] bg-[#0a2240]/50 gap-4">
+              <div className="flex items-center gap-2 text-xs text-blue-300/80">
+                <Package size={14} className="shrink-0 text-blue-400" />
+                <span>Setiap baris barang akan menjadi <strong>batch terpisah</strong>.</span>
               </div>
-
-              {/* Submit */}
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-5 py-2.5 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-400 hover:text-white hover:border-slate-500 transition-colors font-semibold"
+                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-transparent border border-[#143550] text-sm text-slate-400 hover:text-white hover:bg-[#143550] transition-colors font-semibold"
                 >
                   Batal
                 </button>
                 <button
-                  type="submit"
+                  onClick={handleSubmit}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-emerald-600/25 transition-all"
+                  className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-emerald-600/25 transition-all"
                 >
                   {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                  Simpan
+                  Simpan Stok Masuk
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

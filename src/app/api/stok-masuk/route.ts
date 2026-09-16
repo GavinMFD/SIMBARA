@@ -3,12 +3,16 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 // ─── Interfaces ──────────────────────────────────────────────
-interface StokMasukRequest {
+interface StokMasukItem {
   masterBarangId: string;
-  noSuratBelanja: string;
-  tanggalBelanja: string;   // ISO date string, e.g. "2026-01-15"
   hargaSatuan: number;
   qtyMasuk: number;
+}
+
+interface StokMasukRequest {
+  noSuratBelanja: string;
+  tanggalBelanja: string;
+  items: StokMasukItem[];
 }
 
 // ─── GET /api/stok-masuk ─────────────────────────────────────
@@ -105,9 +109,8 @@ export async function GET(request: NextRequest) {
 }
 
 // ─── POST /api/stok-masuk ────────────────────────────────────
-// Catat stok masuk baru (batch baru).
-// Setiap pencatatan SELALU membuat record BatchSuratBelanja baru.
-// sisaQty diisi sama dengan qtyMasuk (belum ada pengambilan).
+// Catat stok masuk baru secara massal.
+// Setiap item akan menghasilkan record BatchSuratBelanja baru dengan Nomor Surat yang sama.
 export async function POST(request: NextRequest) {
   try {
     // ── Auth: ambil user ID dari session ───────────────────
@@ -121,16 +124,9 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
 
     const body: StokMasukRequest = await request.json();
-    const { masterBarangId, noSuratBelanja, tanggalBelanja, hargaSatuan, qtyMasuk } = body;
+    const { noSuratBelanja, tanggalBelanja, items } = body;
 
-    // ── Validasi input ─────────────────────────────────────
-    if (!masterBarangId) {
-      return NextResponse.json(
-        { success: false, error: "Barang wajib dipilih." },
-        { status: 400 }
-      );
-    }
-
+    // ── Validasi input umum ────────────────────────────────
     if (!noSuratBelanja || typeof noSuratBelanja !== "string" || noSuratBelanja.trim().length === 0) {
       return NextResponse.json(
         { success: false, error: "No. Surat Belanja wajib diisi." },
@@ -145,73 +141,87 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!hargaSatuan || hargaSatuan <= 0) {
+    if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Harga satuan harus lebih dari 0." },
+        { success: false, error: "Daftar barang tidak boleh kosong." },
         { status: 400 }
       );
     }
 
-    if (!qtyMasuk || qtyMasuk <= 0) {
-      return NextResponse.json(
-        { success: false, error: "Quantity masuk harus lebih dari 0." },
-        { status: 400 }
-      );
+    // ── Validasi items ─────────────────────────────────────
+    const barangIds = items.map(i => i.masterBarangId);
+    
+    // Pastikan semua barang exists dan active
+    const existingBarang = await prisma.masterBarang.findMany({
+      where: { id: { in: barangIds } },
+    });
+
+    const activeBarangIds = new Set(existingBarang.filter(b => b.isActive).map(b => b.id));
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.masterBarangId) {
+        return NextResponse.json({ success: false, error: `Barang pada baris ke-${i + 1} wajib dipilih.` }, { status: 400 });
+      }
+      if (!item.hargaSatuan || item.hargaSatuan <= 0) {
+        return NextResponse.json({ success: false, error: `Harga satuan pada baris ke-${i + 1} harus > 0.` }, { status: 400 });
+      }
+      if (!item.qtyMasuk || item.qtyMasuk <= 0) {
+        return NextResponse.json({ success: false, error: `Quantity masuk pada baris ke-${i + 1} harus > 0.` }, { status: 400 });
+      }
+      if (!activeBarangIds.has(item.masterBarangId)) {
+        return NextResponse.json({ success: false, error: `Barang pada baris ke-${i + 1} tidak valid atau nonaktif.` }, { status: 400 });
+      }
     }
 
-    // ── Validasi barang exists & active ────────────────────
-    const barang = await prisma.masterBarang.findUnique({
-      where: { id: masterBarangId },
-    });
+    // ── Eksekusi Transaction ───────────────────────────────
+    const results = await prisma.$transaction(async (tx) => {
+      const createdBatches = [];
 
-    if (!barang || !barang.isActive) {
-      return NextResponse.json(
-        { success: false, error: "Barang tidak ditemukan atau sudah nonaktif." },
-        { status: 400 }
-      );
-    }
+      for (const item of items) {
+        // Create batch
+        const batch = await tx.batchSuratBelanja.create({
+          data: {
+            masterBarangId: item.masterBarangId,
+            noSuratBelanja: noSuratBelanja.trim(),
+            tanggalBelanja: new Date(tanggalBelanja),
+            hargaSatuan: item.hargaSatuan,
+            qtyMasuk: Math.floor(item.qtyMasuk),
+            sisaQty: Math.floor(item.qtyMasuk), // sisaQty = qtyMasuk di awal
+            dicatatOleh: userId,
+          },
+        });
+        createdBatches.push(batch);
 
-    // ── Create batch baru ──────────────────────────────────
-    const batch = await prisma.batchSuratBelanja.create({
-      data: {
-        masterBarangId,
-        noSuratBelanja: noSuratBelanja.trim(),
-        tanggalBelanja: new Date(tanggalBelanja),
-        hargaSatuan,
-        qtyMasuk: Math.floor(qtyMasuk),
-        sisaQty: Math.floor(qtyMasuk),   // sisaQty = qtyMasuk (belum ada pengambilan)
-        dicatatOleh: userId,
-      },
-      include: {
-        masterBarang: { select: { namaBarang: true, satuan: true } },
-        pencatat: { select: { nama: true } },
-      },
-    });
+        // Sync stokAktual
+        const stokResult = await tx.batchSuratBelanja.aggregate({
+          _sum: { sisaQty: true },
+          where: { masterBarangId: item.masterBarangId },
+        });
 
-    // ── Sync stokAktual on MasterBarang ─────────────────────
-    // Recalculate total from all batches to keep stokAktual consistent.
-    const stokResult = await prisma.batchSuratBelanja.aggregate({
-      _sum: { sisaQty: true },
-      where: { masterBarangId },
-    });
+        await tx.masterBarang.update({
+          where: { id: item.masterBarangId },
+          data: { stokAktual: stokResult._sum.sisaQty ?? 0 },
+        });
+      }
 
-    await prisma.masterBarang.update({
-      where: { id: masterBarangId },
-      data: { stokAktual: stokResult._sum.sisaQty ?? 0 },
+      return createdBatches;
+    }, {
+      timeout: 10000,
     });
 
     return NextResponse.json(
       {
         success: true,
-        data: batch,
-        message: `Stok masuk berhasil dicatat: ${qtyMasuk} ${barang.satuan} ${barang.namaBarang}.`,
+        data: results,
+        message: `Berhasil mencatat ${items.length} barang masuk untuk Surat Belanja ${noSuratBelanja}.`,
       },
       { status: 201 }
     );
   } catch (error) {
     console.error("POST /api/stok-masuk error:", error);
     return NextResponse.json(
-      { success: false, error: "Gagal mencatat stok masuk." },
+      { success: false, error: "Gagal mencatat stok masuk massal." },
       { status: 500 }
     );
   }

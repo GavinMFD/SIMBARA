@@ -55,9 +55,13 @@ export default function TambahMutasiPage() {
 
   // Success state (US-031)
   const [isSuccess, setIsSuccess] = useState(false);
+  const [hasPrintedAsal, setHasPrintedAsal] = useState(false);
+  const [hasPrintedTujuan, setHasPrintedTujuan] = useState(false);
   const [successData, setSuccessData] = useState<{
     ruanganAsal: string;
     ruanganTujuan: string;
+    ruanganAsalId: string;
+    ruanganTujuanId: string;
   } | null>(null);
 
   useEffect(() => {
@@ -119,6 +123,8 @@ export default function TambahMutasiPage() {
         setSuccessData({
           ruanganAsal: selectedAset?.ruangan.namaRuangan || "",
           ruanganTujuan: selectedTujuan?.namaRuangan || "",
+          ruanganAsalId: selectedAset?.ruanganId || "",
+          ruanganTujuanId: selectedRuanganId,
         });
         setIsSuccess(true);
       } else {
@@ -144,36 +150,42 @@ export default function TambahMutasiPage() {
             <h2 className="text-2xl font-bold text-white mb-2">Mutasi Berhasil Disimpan</h2>
             
             {/* DIR Notification US-031 */}
-            <div className="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-left">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  <Printer className="text-amber-400" size={20} />
-                </div>
-                <div>
-                  <h3 className="text-amber-400 font-semibold mb-1">Perhatian: Sinkronisasi Dokumen DIR</h3>
-                  <p className="text-sm text-slate-300">
-                    Aset telah dipindahkan dari <strong className="text-white">{successData.ruanganAsal}</strong> ke <strong className="text-white">{successData.ruanganTujuan}</strong>. 
-                    Daftar Inventaris Ruangan (DIR) untuk kedua ruangan tersebut kini <strong>tidak sinkron</strong> dengan kondisi fisik dan perlu dicetak ulang.
-                  </p>
+            {(!hasPrintedAsal || !hasPrintedTujuan) && (
+              <div className="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-left">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">
+                    <Printer className="text-amber-400" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-amber-400 font-semibold mb-1">Perhatian: Sinkronisasi Dokumen DIR</h3>
+                    <p className="text-sm text-slate-300">
+                      Aset telah dipindahkan dari <strong className="text-white">{successData.ruanganAsal}</strong> ke <strong className="text-white">{successData.ruanganTujuan}</strong>. 
+                      Daftar Inventaris Ruangan (DIR) untuk kedua ruangan tersebut kini <strong>tidak sinkron</strong> dengan kondisi fisik dan perlu dicetak ulang.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
-              <button 
-                onClick={() => window.print()} 
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-300 hover:text-white transition-colors"
+              <Link 
+                href={`/laporan/dir?ruanganId=${successData.ruanganAsalId}`}
+                target="_blank"
+                onClick={() => setHasPrintedAsal(true)}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0a2240] border border-[#143550] text-sm text-slate-300 hover:text-white transition-colors"
               >
                 <Printer size={16} />
                 Cetak DIR {successData.ruanganAsal}
-              </button>
-              <button 
-                onClick={() => window.print()} 
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-300 hover:text-white transition-colors"
+              </Link>
+              <Link 
+                href={`/laporan/dir?ruanganId=${successData.ruanganTujuanId}`}
+                target="_blank"
+                onClick={() => setHasPrintedTujuan(true)}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0a2240] border border-[#143550] text-sm text-slate-300 hover:text-white transition-colors"
               >
                 <Printer size={16} />
                 Cetak DIR {successData.ruanganTujuan}
-              </button>
+              </Link>
             </div>
           </div>
           
@@ -319,7 +331,7 @@ export default function TambahMutasiPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || !selectedAsetId || !selectedRuanganId}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <Loader2 size={16} className="animate-spin" />

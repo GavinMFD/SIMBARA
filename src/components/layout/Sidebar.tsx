@@ -21,28 +21,35 @@ import {
   PackagePlus,
   PackageOpen,
   AlertTriangle,
+  Briefcase,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/app/(auth)/login/actions";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Aset Tetap", href: "/barang", icon: Package },
-  { name: "Kategori Aset", href: "/kategori", icon: Tags },
-  { name: "Ruangan", href: "/ruangan", icon: DoorOpen },
-  { name: "Movement Tracking", href: "/mutasi", icon: ArrowLeftRight },
-  { name: "Log ATK", href: "/atk", icon: ClipboardList },
-  { name: "Kelola Barang ATK", href: "/master-barang", icon: PackagePlus },
-  { name: "Stok Masuk", href: "/stok-masuk", icon: PackageOpen },
-  { name: "Barang Kritis", href: "/barang-kritis", icon: AlertTriangle },
-  { name: "Reports", href: "/laporan", icon: FileBarChart2 },
-  { name: "Pengguna", href: "/pengguna", icon: Users },
+const ALL_NAVIGATION = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "kasubag"] },
+  { name: "Surat Belanja", href: "/surat-belanja", icon: PackageOpen, roles: ["super_admin", "admin"] },
+  { name: "Aset Tetap", href: "/barang", icon: Package, roles: ["super_admin", "admin"] },
+  { name: "Distribusi Persediaan", href: "/atk", icon: ClipboardList, roles: ["super_admin", "admin"] },
+  { name: "Master Persediaan", href: "/master-barang", icon: PackagePlus, roles: ["super_admin", "admin"] },
+  { name: "Kategori Barang", href: "/kategori", icon: Tags, roles: ["super_admin", "admin"] },
+  { name: "Mutasi Aset", href: "/mutasi", icon: ArrowLeftRight, roles: ["super_admin", "admin"] },
+  { name: "Ruangan", href: "/ruangan", icon: DoorOpen, roles: ["super_admin", "admin"] },
+  { name: "Pegawai", href: "/pegawai", icon: Briefcase, roles: ["super_admin", "admin"] },
+  { name: "Barang Kritis", href: "/barang-kritis", icon: AlertTriangle, roles: ["super_admin", "admin"] },
+  { name: "Laporan", href: "/laporan", icon: FileBarChart2, roles: ["super_admin", "admin", "kasubag"] },
+  { name: "Pengguna", href: "/pengguna", icon: Users, roles: ["super_admin"] },
 ];
 
 export default function Sidebar({ user }: { user?: any }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Filter navigation by role
+  const navigation = ALL_NAVIGATION.filter(item => 
+    !user || item.roles.includes(user.role)
+  );
 
   const handleLogout = () => {
     startTransition(() => {
@@ -53,11 +60,11 @@ export default function Sidebar({ user }: { user?: any }) {
   return (
     <aside
       className={`flex h-screen flex-col border-r border-border bg-[#041424] text-slate-300 transition-all duration-300 print:hidden ${
-        collapsed ? "w-20" : "w-64"
+        collapsed ? "w-16" : "w-60"
       }`}
     >
       {/* Logo & Toggle Header */}
-      <div className={`flex h-20 items-center border-b border-border px-3 ${
+      <div className={`flex h-16 items-center border-b border-border px-3 ${
         collapsed ? "justify-center" : "justify-between"
       }`}>
         {!collapsed && (
@@ -90,7 +97,7 @@ export default function Sidebar({ user }: { user?: any }) {
       </div>
 
       {/* Main Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
         <nav className="space-y-1">
           {navigation.map((item) => {
             const isActive =
@@ -100,7 +107,7 @@ export default function Sidebar({ user }: { user?: any }) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 group ${
                   isActive
                     ? "bg-[#0f2b48] text-white shadow-sm border-l-2 border-blue-500"
                     : "text-slate-400 hover:bg-[#0b2136] hover:text-slate-200"
@@ -120,53 +127,57 @@ export default function Sidebar({ user }: { user?: any }) {
         </nav>
 
         {/* Preferences Section */}
-        <div className="space-y-2">
-          {!collapsed && (
-            <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
-              Preferences
-            </p>
-          )}
-          <nav className="space-y-1">
-            <Link
-              href="/pengaturan"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group ${
-                pathname === "/pengaturan"
-                  ? "bg-[#0f2b48] text-white shadow-sm border-l-2 border-blue-500"
-                  : "text-slate-400 hover:bg-[#0b2136] hover:text-slate-200"
-              }`}
-              title="Settings"
-            >
-              <Settings
-                size={18}
-                className={`shrink-0 ${
-                  pathname === "/pengaturan" ? "text-blue-400" : "text-slate-400 group-hover:text-slate-200"
+        {(!user || user.role !== "kasubag") && (
+          <div className="space-y-2">
+            {!collapsed && (
+              <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                Pengaturan
+              </p>
+            )}
+            <nav className="space-y-1">
+              <Link
+                href="/pengaturan"
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 group ${
+                  pathname === "/pengaturan"
+                    ? "bg-[#0f2b48] text-white shadow-sm border-l-2 border-blue-500"
+                    : "text-slate-400 hover:bg-[#0b2136] hover:text-slate-200"
                 }`}
-              />
-              {!collapsed && <span className="truncate">Settings</span>}
-            </Link>
-          </nav>
-        </div>
+                title="Pengaturan"
+              >
+                <Settings
+                  size={18}
+                  className={`shrink-0 ${
+                    pathname === "/pengaturan" ? "text-blue-400" : "text-slate-400 group-hover:text-slate-200"
+                  }`}
+                />
+                {!collapsed && <span className="truncate">Pengaturan</span>}
+              </Link>
+            </nav>
+          </div>
+        )}
 
-        {/* Action Button: + New Asset */}
-        <div className="pt-2">
-          <Link
-            href="/barang/tambah"
-            className={`flex items-center justify-center gap-2 rounded-lg bg-[#ff7e47] text-white font-semibold transition-all duration-200 hover:bg-[#e06833] active:scale-95 shadow-md shadow-[#ff7e47]/10 ${
-              collapsed ? "h-10 w-10 rounded-full" : "w-full py-2.5 text-sm"
-            }`}
-            title="Tambah Aset Baru"
-          >
-            <Plus size={18} className="shrink-0" />
-            {!collapsed && <span>New Asset</span>}
-          </Link>
-        </div>
+        {/* Action Button: + Input Penerimaan */}
+        {(!user || user.role !== "kasubag") && (
+          <div className="pt-2">
+            <Link
+              href="/surat-belanja/tambah"
+              className={`flex items-center justify-center gap-2 rounded-md bg-[#ff7e47] text-white font-semibold transition-all duration-200 hover:bg-[#e06833] active:scale-95 shadow-md shadow-[#ff7e47]/10 ${
+                collapsed ? "h-10 w-10 rounded-full" : "w-full py-2 text-sm"
+              }`}
+              title="Input Surat Belanja Baru"
+            >
+              <Plus size={18} className="shrink-0" />
+              {!collapsed && <span>Input Penerimaan</span>}
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Footer Profile Block */}
-      <div className="border-t border-border p-3 bg-[#030d1a]/50 flex flex-col gap-2">
+      <div className="border-t border-border px-3 py-4 pb-8 bg-[#030d1a]/50 flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden">
-            <Avatar className="h-9 w-9 shrink-0 border border-slate-700">
+            <Avatar className="h-8 w-8 shrink-0 border border-slate-700">
               <AvatarFallback className="bg-blue-600 text-xs font-semibold text-white uppercase">
                 {user?.nama?.substring(0, 2) || "AD"}
               </AvatarFallback>

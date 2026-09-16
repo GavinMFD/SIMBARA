@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
 import {
   Search,
   Plus,
@@ -252,10 +253,10 @@ export default function MasterBarangPage() {
       {/* ── Header ──────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Kelola Barang ATK</p>
-          <h1 className="text-2xl font-bold text-white">Master Barang ATK</h1>
+          <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Kelola Barang Persediaan</p>
+          <h1 className="text-2xl font-bold text-white">Master Barang Persediaan</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Kelola daftar barang persediaan ATK dan pantau stok minimum.
+            Kelola daftar barang Persediaan dan pantau stok minimum.
           </p>
         </div>
         <button
@@ -661,7 +662,7 @@ export default function MasterBarangPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Stok dikelola melalui menu Stok Masuk & Transaksi ATK</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Stok dikelola melalui menu Stok Masuk & Transaksi Persediaan</p>
                 </div>
               )}
 
@@ -686,7 +687,11 @@ export default function MasterBarangPage() {
                       <tbody className="divide-y divide-[#143550]/60">
                         {editingBatches.map((batch) => (
                           <tr key={batch.id} className="hover:bg-[#0f2b48]/30">
-                            <td className="px-3 py-1.5 text-slate-300 font-medium">{batch.noSuratBelanja}</td>
+                            <td className="px-3 py-1.5 text-slate-300 font-medium">
+                              <Link href={`/stok-masuk/${batch.id}`} className="text-blue-400 hover:text-blue-300 hover:underline transition-colors" title="Lihat Detail Batch">
+                                {batch.noSuratBelanja}
+                              </Link>
+                            </td>
                             <td className="px-3 py-1.5 text-slate-400">
                               {new Date(batch.tanggalBelanja).toLocaleDateString("id-ID", {
                                 day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Makassar",

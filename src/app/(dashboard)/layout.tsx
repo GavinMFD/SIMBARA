@@ -27,12 +27,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  if (user.needsPasswordReset) {
+    redirect("/ubah-password");
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar user={user} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar user={user} />
-        <main className="flex-1 overflow-y-auto bg-[#020b14] bg-grid-dots p-6">
+        <main className="flex-1 overflow-y-auto bg-[#020b14] bg-grid-dots p-5">
           {children}
         </main>
       </div>

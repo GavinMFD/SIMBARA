@@ -35,7 +35,9 @@ export function buildTransaksiAtkFilter(
   // ── Filter unit kerja (partial, case-insensitive) ───────
   const unitKerja = searchParams.get("unitKerja");
   if (unitKerja) {
-    where.unitKerja = { contains: unitKerja, mode: "insensitive" };
+    where.pegawai = {
+      unitKerja: { contains: unitKerja, mode: "insensitive" }
+    };
   }
 
   // ── Filter nama barang (via relasi, partial, case-insensitive) ──
