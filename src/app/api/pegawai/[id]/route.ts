@@ -3,11 +3,12 @@ import prisma from "@/lib/prisma";
 import { requireAdminOrKasubag } from "@/lib/api-auth";
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // GET /api/pegawai/[id] - Ambil detail pegawai
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, props: RouteParams) {
+  const params = await props.params;
   try {
     const auth = await requireAdminOrKasubag();
     if (!auth.isAuthorized) return auth.errorResponse!;
@@ -33,7 +34,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/pegawai/[id] - Update pegawai
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, props: RouteParams) {
+  const params = await props.params;
   try {
     const auth = await requireAdminOrKasubag();
     if (!auth.isAuthorized) return auth.errorResponse!;
@@ -78,7 +80,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/pegawai/[id] - Hapus pegawai
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, props: RouteParams) {
+  const params = await props.params;
   try {
     const auth = await requireAdminOrKasubag();
     if (!auth.isAuthorized) return auth.errorResponse!;

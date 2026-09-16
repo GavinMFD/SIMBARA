@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
       }
     };
 
-    const [updatedKepala, updatedKasubag] = await prisma.$transaction([
+    const [updatedKepala, updatedKasubag] = await Promise.all([
       upsertTtd("kepala_bps", kepala),
       upsertTtd("kasubag", kasubag),
     ]);
