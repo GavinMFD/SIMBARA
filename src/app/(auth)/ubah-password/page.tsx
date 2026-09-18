@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
-import { resetPasswordFirstTime } from "./actions";
-import { KeyRound, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { useState, useActionState } from "react";
+import { resetPasswordFirstTime, skipPasswordReset } from "./actions";
+import { KeyRound, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
 export default function UbahPasswordPage() {
   const [state, formAction, isPending] = useActionState(resetPasswordFirstTime, null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
     <div className="flex h-screen flex-col items-center justify-center bg-[#020b14] bg-grid-dots px-4 relative overflow-hidden">
@@ -44,12 +46,20 @@ export default function UbahPasswordPage() {
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors"
                 />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Minimal 6 karakter"
                   required
-                  className="w-full rounded-xl border border-[#143550] bg-[#071a2e] px-10 py-3 text-sm text-slate-200 placeholder:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-inner"
+                  className="w-full rounded-xl border border-[#143550] bg-[#071a2e] px-10 py-3 text-sm text-slate-200 placeholder:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-inner pr-12"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 transition-colors focus:outline-none"
+                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -63,12 +73,20 @@ export default function UbahPasswordPage() {
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors"
                 />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
                   placeholder="Ketik ulang password baru"
                   required
-                  className="w-full rounded-xl border border-[#143550] bg-[#071a2e] px-10 py-3 text-sm text-slate-200 placeholder:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-inner"
+                  className="w-full rounded-xl border border-[#143550] bg-[#071a2e] px-10 py-3 text-sm text-slate-200 placeholder:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-inner pr-12"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 transition-colors focus:outline-none"
+                  aria-label={showConfirmPassword ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -85,6 +103,14 @@ export default function UbahPasswordPage() {
                   <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
                 </>
               )}
+            </button>
+
+            <button
+              formAction={skipPasswordReset}
+              disabled={isPending}
+              className="w-full flex items-center justify-center py-2 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              Lakukan Nanti Saja
             </button>
           </form>
         </div>

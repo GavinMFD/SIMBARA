@@ -1,13 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { login } from "./actions";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, KeyRound, Mail, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, KeyRound, Mail, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(login, null);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="w-full">
@@ -73,16 +74,24 @@ export default function LoginPage() {
                   Kata Sandi <span className="text-red-400">*</span>
                 </label>
               </div>
-              <div className="relative">
-                <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+              <div className="relative group">
+                <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-[#143550] bg-[#0a2240] pl-11 pr-4 py-3 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium"
+                  className="w-full rounded-xl border border-[#143550] bg-[#0a2240] pl-11 pr-12 py-3 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium shadow-inner"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400 transition-colors focus:outline-none"
+                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
           </div>

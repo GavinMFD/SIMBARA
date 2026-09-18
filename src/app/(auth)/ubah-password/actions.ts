@@ -44,3 +44,19 @@ export async function resetPasswordFirstTime(prevState: any, formData: FormData)
 
   redirect("/");
 }
+
+export async function skipPasswordReset() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    return { error: "Sesi tidak valid, silakan login kembali" };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { needsPasswordReset: false },
+  });
+
+  redirect("/");
+}
