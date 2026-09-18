@@ -32,7 +32,7 @@ interface Ruangan {
   kodeRuangan: string;
 }
 
-type ItemType = "atk" | "aset";
+type ItemType = "persediaan" | "aset";
 
 interface FormItem {
   id: string; // temp id for key
@@ -59,7 +59,7 @@ export default function TambahSuratBelanjaPage() {
   const [noSuratBelanja, setNoSuratBelanja] = useState("");
   const [tanggalBelanja, setTanggalBelanja] = useState(new Date().toISOString().split("T")[0]);
   const [items, setItems] = useState<FormItem[]>([
-    { id: crypto.randomUUID(), type: "atk", qty: 1, hargaSatuan: 0 }
+    { id: crypto.randomUUID(), type: "persediaan", qty: 1, hargaSatuan: 0 }
   ]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,7 +131,7 @@ export default function TambahSuratBelanjaPage() {
       if (item.qty <= 0) return setError(`Baris ${i + 1}: Qty harus lebih dari 0.`);
       if (item.hargaSatuan <= 0) return setError(`Baris ${i + 1}: Harga satuan harus lebih dari 0.`);
       
-      if (item.type === "atk" && !item.masterBarangId) {
+      if (item.type === "persediaan" && !item.masterBarangId) {
         return setError(`Baris ${i + 1}: Silakan pilih Master Persediaan.`);
       }
       if (item.type === "aset") {
@@ -235,7 +235,7 @@ export default function TambahSuratBelanjaPage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => addItem("atk")}
+                onClick={() => addItem("persediaan")}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors"
               >
                 <Plus size={14} /> Tambah Persediaan
@@ -272,13 +272,13 @@ export default function TambahSuratBelanjaPage() {
                       {index + 1}
                     </span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      item.type === "atk" ? "bg-emerald-500/15 text-emerald-400" : "bg-blue-500/15 text-blue-400"
+                      item.type === "persediaan" ? "bg-emerald-500/15 text-emerald-400" : "bg-blue-500/15 text-blue-400"
                     }`}>
-                      {item.type === "atk" ? "Barang Persediaan" : "Aset Tetap (NUP)"}
+                      {item.type === "persediaan" ? "Barang Persediaan" : "Aset Tetap (NUP)"}
                     </span>
                   </div>
 
-                  {item.type === "atk" ? (
+                  {item.type === "persediaan" ? (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                       <div className="md:col-span-5 space-y-1.5">
                         <label className="text-[11px] font-semibold text-slate-400 uppercase">Pilih Master Persediaan</label>

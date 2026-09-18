@@ -271,8 +271,8 @@ export default function LaporanPage() {
               status={atkExport.status}
               onClick={() =>
                 atkExport.trigger(
-                  `/api/laporan/rekap-atk/export?bulan=${bulanAtk}`,
-                  `rekap-atk-${bulanAtk}.xlsx`
+                  `/api/laporan/rekap-persediaan/export?bulan=${bulanAtk}`,
+                  `rekap-persediaan-${bulanAtk}.xlsx`
                 )
               }
             />

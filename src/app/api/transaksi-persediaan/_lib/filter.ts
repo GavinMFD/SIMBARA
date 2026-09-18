@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 /**
- * Membangun Prisma `where` clause untuk query TransaksiAtk
+ * Membangun Prisma `where` clause untuk query TransaksiPersediaan
  * berdasarkan search params dari request URL.
  *
  * Filter yang didukung:
@@ -10,10 +10,10 @@ import { Prisma } from "@prisma/client";
  * - unitKerja    : partial match, case-insensitive
  * - namaBarang   : partial match, case-insensitive (via relasi masterBarang)
  */
-export function buildTransaksiAtkFilter(
+export function buildTransaksiPersediaanFilter(
   searchParams: URLSearchParams
-): Prisma.TransaksiAtkWhereInput {
-  const where: Prisma.TransaksiAtkWhereInput = {};
+): Prisma.TransaksiPersediaanWhereInput {
+  const where: Prisma.TransaksiPersediaanWhereInput = {};
 
   // ── Filter tanggal (range) ──────────────────────────────
   const tanggalDari = searchParams.get("tanggalDari");

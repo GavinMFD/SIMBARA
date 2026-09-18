@@ -113,7 +113,7 @@ export default function RiwayatAtkPage() {
     async (f: typeof appliedFilter, p: number) => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/transaksi-atk?${buildQueryString(f, p)}`);
+        const res = await fetch(`/api/transaksi-persediaan?${buildQueryString(f, p)}`);
         const json: ApiResponse = await res.json();
         if (json.success) {
           setData(json.data);
@@ -158,7 +158,7 @@ export default function RiwayatAtkPage() {
       if (appliedFilter.endDate) params.set("endDate", appliedFilter.endDate);
 
       // Menggunakan endpoint export khusus yang menghasilkan file .xlsx
-      const res = await fetch(`/api/transaksi-atk/export?${params.toString()}`);
+      const res = await fetch(`/api/transaksi-persediaan/export?${params.toString()}`);
       if (!res.ok) throw new Error("Export gagal");
 
       const blob = await res.blob();
@@ -167,7 +167,7 @@ export default function RiwayatAtkPage() {
       a.href = url;
       const contentDisp = res.headers.get("Content-Disposition") || "";
       const fileNameMatch = contentDisp.match(/filename="(.+)"/);
-      a.download = fileNameMatch ? fileNameMatch[1] : `riwayat-atk.xlsx`;
+      a.download = fileNameMatch ? fileNameMatch[1] : `riwayat-persediaan.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();

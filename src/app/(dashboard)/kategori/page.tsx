@@ -17,7 +17,7 @@ import {
   ClipboardList
 } from "lucide-react";
 
-type CategoryType = "aset" | "atk";
+type CategoryType = "aset" | "persediaan";
 
 interface KategoriItem {
   id: string;
@@ -200,9 +200,9 @@ export default function UnifiedKategoriPage() {
           Kategori Aset Tetap
         </button>
         <button
-          onClick={() => { setActiveTab("atk"); setSearch(""); }}
+          onClick={() => { setActiveTab("persediaan"); setSearch(""); }}
           className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-all ${
-            activeTab === "atk" ? "border-blue-500 text-blue-400" : "border-transparent text-slate-500 hover:text-slate-300"
+            activeTab === "persediaan" ? "border-blue-500 text-blue-400" : "border-transparent text-slate-500 hover:text-slate-300"
           }`}
         >
           <ClipboardList size={16} />

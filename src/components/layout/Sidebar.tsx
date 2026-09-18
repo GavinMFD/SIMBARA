@@ -30,7 +30,7 @@ const ALL_NAVIGATION = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "kasubag"] },
   { name: "Surat Belanja", href: "/surat-belanja", icon: PackageOpen, roles: ["super_admin", "admin"] },
   { name: "Aset Tetap", href: "/barang", icon: Package, roles: ["super_admin", "admin"] },
-  { name: "Distribusi Persediaan", href: "/atk", icon: ClipboardList, roles: ["super_admin", "admin"] },
+  { name: "Distribusi Persediaan", href: "/persediaan", icon: ClipboardList, roles: ["super_admin", "admin"] },
   { name: "Master Persediaan", href: "/master-barang", icon: PackagePlus, roles: ["super_admin", "admin"] },
   { name: "Kategori Barang", href: "/kategori", icon: Tags, roles: ["super_admin", "admin"] },
   { name: "Mutasi Aset", href: "/mutasi", icon: ArrowLeftRight, roles: ["super_admin", "admin"] },

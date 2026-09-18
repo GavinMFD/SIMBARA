@@ -28,13 +28,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (hasDateFilter) {
-      where.transaksiAtk = {
+      where.transaksiPersediaan = {
         some: {
           tanggalPengambilan: dateFilter,
         },
       };
     } else {
-      where.transaksiAtk = {
+      where.transaksiPersediaan = {
         some: {},
       };
     }
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const pegawais = await prisma.pegawai.findMany({
       where,
       include: {
-        transaksiAtk: {
+        transaksiPersediaan: {
           where: hasDateFilter ? { tanggalPengambilan: dateFilter } : undefined,
           include: {
             masterBarang: {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       let totalItems = 0;
       const rincianMap = new Map<string, { namaBarang: string; satuan: string; qty: number }>();
 
-      pegawai.transaksiAtk.forEach((trx) => {
+      pegawai.transaksiPersediaan.forEach((trx) => {
         totalItems += trx.qtyDiambil;
         const key = trx.masterBarangId;
         if (rincianMap.has(key)) {
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     const csvContent = csvHeader + csvRows.join("\n");
 
     const dateStr = startDate && endDate ? `${startDate}_to_${endDate}` : (startDate || endDate || "All");
-    const filename = `rekap-pengambilan-atk-pegawai-${dateStr}.csv`;
+    const filename = `rekap-pengambilan-persediaan-pegawai-${dateStr}.csv`;
 
     return new NextResponse(csvContent, {
       status: 200,

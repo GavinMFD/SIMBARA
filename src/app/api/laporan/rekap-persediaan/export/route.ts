@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import prisma from "@/lib/prisma";
 
-// GET /api/laporan/rekap-atk/export?bulan=2025-01
-// Export rekap ATK bulanan ke file .xlsx
+// GET /api/laporan/rekap-persediaan/export?bulan=2025-01
+// Export rekap Persediaan bulanan ke file .xlsx
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       where: dateFilter ? { tanggalBelanja: dateFilter } : undefined,
       include: {
         masterBarang: { select: { namaBarang: true, satuan: true } },
-        transaksiAtkDetail: {
+        transaksiPersediaanDetail: {
           select: { qtyDipakai: true, hargaSaatPakai: true },
         },
       },
@@ -109,10 +109,10 @@ export async function GET(request: NextRequest) {
 
     // ── Data rows ──────────────────────────────────────────
     batches.forEach((b, idx) => {
-      const totalQtyKeluar = b.transaksiAtkDetail.reduce(
+      const totalQtyKeluar = b.transaksiPersediaanDetail.reduce(
         (s, d) => s + d.qtyDipakai, 0
       );
-      const totalNilaiKeluar = b.transaksiAtkDetail.reduce(
+      const totalNilaiKeluar = b.transaksiPersediaanDetail.reduce(
         (s, d) => s + Number(d.hargaSaatPakai) * d.qtyDipakai, 0
       );
       const hargaSatuan = Number(b.hargaSatuan);
@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
     // ── Generate buffer ────────────────────────────────────
     const buffer = await workbook.xlsx.writeBuffer();
     const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const filename = `rekap-atk-${bulan ?? "semua"}-${timestamp}.xlsx`;
+    const filename = `rekap-persediaan-${bulan ?? "semua"}-${timestamp}.xlsx`;
 
     return new NextResponse(buffer, {
       status: 200,
@@ -259,9 +259,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("GET /api/laporan/rekap-atk/export error:", error);
+    console.error("GET /api/laporan/rekap-persediaan/export error:", error);
     return NextResponse.json(
-      { success: false, error: "Gagal mengekspor rekap ATK." },
+      { success: false, error: "Gagal mengekspor rekap Persediaan." },
       { status: 500 }
     );
   }

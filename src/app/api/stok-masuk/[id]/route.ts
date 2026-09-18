@@ -23,16 +23,16 @@ export async function GET(
             nama: true,
           },
         },
-        transaksiAtkDetail: {
+        transaksiPersediaanDetail: {
           include: {
-            transaksiAtk: {
+            transaksiPersediaan: {
               include: {
                 pegawai: true,
               },
             },
           },
           orderBy: {
-            transaksiAtk: {
+            transaksiPersediaan: {
               tanggalPengambilan: "desc",
             },
           },

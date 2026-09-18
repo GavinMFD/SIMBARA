@@ -205,7 +205,7 @@ export default function BatchDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#0f2b48]">
-                  {data.transaksiAtkDetail.length === 0 ? (
+                  {data.transaksiPersediaanDetail.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-5 py-12 text-center text-slate-500">
                         <div className="flex flex-col items-center gap-2">
@@ -215,16 +215,16 @@ export default function BatchDetailPage() {
                       </td>
                     </tr>
                   ) : (
-                    data.transaksiAtkDetail.map((detail: any) => (
+                    data.transaksiPersediaanDetail.map((detail: any) => (
                       <tr key={detail.id} className="hover:bg-[#0a2240]/50 transition-colors">
                         <td className="px-5 py-3 text-xs">
-                          {formatDate(detail.transaksiAtk.tanggalPengambilan)}
+                          {formatDate(detail.transaksiPersediaan.tanggalPengambilan)}
                         </td>
                         <td className="px-5 py-3 font-medium text-white">
-                          {detail.transaksiAtk.pegawai.nama}
+                          {detail.transaksiPersediaan.pegawai.nama}
                         </td>
                         <td className="px-5 py-3 text-xs text-slate-400">
-                          {detail.transaksiAtk.pegawai.unitKerja}
+                          {detail.transaksiPersediaan.pegawai.unitKerja}
                         </td>
                         <td className="px-5 py-3 text-center">
                           <span className="inline-flex items-center justify-center px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold text-xs rounded-lg">

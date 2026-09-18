@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import prisma from "@/lib/prisma";
-import { buildTransaksiAtkFilter } from "../_lib/filter";
+import { buildTransaksiPersediaanFilter } from "../_lib/filter";
 
-// ─── GET /api/transaksi-atk/export ───────────────────────────
-// Export riwayat transaksi ATK ke file Excel (.xlsx).
-// Mendukung filter query yang sama dengan GET /api/transaksi-atk.
+// ─── GET /api/transaksi-persediaan/export ───────────────────────────
+// Export riwayat transaksi Persediaan ke file Excel (.xlsx).
+// Mendukung filter query yang sama dengan GET /api/transaksi-persediaan.
 // Mengambil SEMUA data yang cocok (tanpa pagination).
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const where = buildTransaksiAtkFilter(searchParams);
+    const where = buildTransaksiPersediaanFilter(searchParams);
 
     // ── Ambil semua data yang cocok (tanpa pagination) ────
-    const transaksi = await prisma.transaksiAtk.findMany({
+    const transaksi = await prisma.transaksiPersediaan.findMany({
       where,
       include: {
         masterBarang: { select: { namaBarang: true, satuan: true } },
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     workbook.creator = "SIPANDAI";
     workbook.created = new Date();
 
-    const sheet = workbook.addWorksheet("Riwayat ATK");
+    const sheet = workbook.addWorksheet("Riwayat Persediaan");
 
     // ── Definisi kolom ────────────────────────────────────
     sheet.columns = [
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       .toISOString()
       .slice(0, 10)
       .replace(/-/g, "");
-    const filename = `riwayat-atk-${timestamp}.xlsx`;
+    const filename = `riwayat-persediaan-${timestamp}.xlsx`;
 
     // ── Return file sebagai response ──────────────────────
     return new NextResponse(buffer, {
@@ -109,9 +109,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("GET /api/transaksi-atk/export error:", error);
+    console.error("GET /api/transaksi-persediaan/export error:", error);
     return NextResponse.json(
-      { success: false, error: "Gagal mengekspor data transaksi ATK." },
+      { success: false, error: "Gagal mengekspor data transaksi Persediaan." },
       { status: 500 }
     );
   }

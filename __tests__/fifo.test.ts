@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { NextRequest } from "next/server";
 import prisma from "../src/lib/prisma";
-import { POST } from "../src/app/api/transaksi-atk/route";
+import { POST } from "../src/app/api/transaksi-persediaan/route";
 
-describe("FIFO ATK API & Logic", () => {
+describe("FIFO Persediaan API & Logic", () => {
   let testKategoriId: string;
   let testBarangId: string;
   let testPegawaiId: string;
@@ -77,10 +77,10 @@ describe("FIFO ATK API & Logic", () => {
   // Cleanup: Hapus dummy data
   afterAll(async () => {
     // Hapus detail & transaksi terlebih dahulu
-    await prisma.transaksiAtkDetail.deleteMany({
+    await prisma.transaksiPersediaanDetail.deleteMany({
       where: { batchSuratBelanjaId: { in: testBatchIds } },
     });
-    await prisma.transaksiAtk.deleteMany({
+    await prisma.transaksiPersediaan.deleteMany({
       where: { pegawaiId: testPegawaiId },
     });
     // Hapus batch, barang, kategori, pegawai
@@ -94,7 +94,7 @@ describe("FIFO ATK API & Logic", () => {
 
   // Helper untuk melakukan request POST
   const makeRequest = async (quantity: number) => {
-    const req = new NextRequest("http://localhost:3000/api/transaksi-atk", {
+    const req = new NextRequest("http://localhost:3000/api/transaksi-persediaan", {
       method: "POST",
       body: JSON.stringify({
         pegawaiId: testPegawaiId,

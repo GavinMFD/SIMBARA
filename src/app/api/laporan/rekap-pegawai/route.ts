@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (hasDateFilter) {
-      where.transaksiAtk = {
+      where.transaksiPersediaan = {
         some: {
           tanggalPengambilan: dateFilter,
         },
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     } else {
       // If no date filter, still only show Pegawai who have AT least one transaction overall?
       // Yes, because this is a "Rekap Pengambilan" report, we only care about people who actually took something.
-      where.transaksiAtk = {
+      where.transaksiPersediaan = {
         some: {},
       };
     }
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const pegawais = await prisma.pegawai.findMany({
       where,
       include: {
-        transaksiAtk: {
+        transaksiPersediaan: {
           where: hasDateFilter ? { tanggalPengambilan: dateFilter } : undefined,
           include: {
             masterBarang: {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       let totalItems = 0;
       const rincianMap = new Map<string, { namaBarang: string; satuan: string; qty: number }>();
 
-      pegawai.transaksiAtk.forEach((trx) => {
+      pegawai.transaksiPersediaan.forEach((trx) => {
         totalItems += trx.qtyDiambil;
         const key = trx.masterBarangId;
         if (rincianMap.has(key)) {

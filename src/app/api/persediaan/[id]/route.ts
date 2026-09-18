@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/atk/[id] - Detail ATK (MasterBarang)
+// GET /api/persediaan/[id] - Detail Persediaan (MasterBarang)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,7 +29,7 @@ export async function GET(
     return NextResponse.json({ success: true, data: { stok } });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: "Gagal mengambil detail ATK" },
+      { success: false, error: "Gagal mengambil detail Persediaan" },
       { status: 500 }
     );
   }

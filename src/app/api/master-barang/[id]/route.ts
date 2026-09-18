@@ -88,7 +88,7 @@ export async function PUT(
     }
 
     // Note: stokAktual intentionally NOT handled here.
-    // stokAktual is managed exclusively by stok-masuk (POST) and transaksi-atk (POST).
+    // stokAktual is managed exclusively by stok-masuk (POST) and transaksi-persediaan (POST).
 
     const barang = await prisma.masterBarang.update({
       where: { id },
@@ -120,7 +120,7 @@ export async function PUT(
 //
 // Transaksi yang dicek:
 // 1. BatchSuratBelanja (stok masuk)
-// 2. TransaksiAtk (pengambilan barang)
+// 2. TransaksiPersediaan (pengambilan barang)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -143,7 +143,7 @@ export async function DELETE(
     // ── 2. Cek apakah barang punya transaksi terkait ────────
     const [batchCount, transaksiCount] = await Promise.all([
       prisma.batchSuratBelanja.count({ where: { masterBarangId: id } }),
-      prisma.transaksiAtk.count({ where: { masterBarangId: id } }),
+      prisma.transaksiPersediaan.count({ where: { masterBarangId: id } }),
     ]);
 
     const hasTransactions = batchCount > 0 || transaksiCount > 0;
@@ -168,7 +168,7 @@ export async function DELETE(
         hasTransactions: true,
         transactionSummary: {
           batchSuratBelanja: batchCount,
-          transaksiAtk: transaksiCount,
+          transaksiPersediaan: transaksiCount,
         },
       });
     }
@@ -185,7 +185,7 @@ export async function DELETE(
       hasTransactions: true,
       transactionSummary: {
         batchSuratBelanja: batchCount,
-        transaksiAtk: transaksiCount,
+        transaksiPersediaan: transaksiCount,
       },
     });
   } catch (error) {

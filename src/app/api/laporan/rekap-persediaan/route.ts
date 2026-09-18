@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/laporan/rekap-atk?bulan=2025-01
-// Menghasilkan rekap ATK bulanan (masuk & keluar per surat belanja)
+// GET /api/laporan/rekap-persediaan?bulan=2025-01
+// Menghasilkan rekap Persediaan bulanan (masuk & keluar per surat belanja)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       where: dateFilter ? { tanggalBelanja: dateFilter } : undefined,
       include: {
         masterBarang: { select: { namaBarang: true, satuan: true } },
-        transaksiAtkDetail: {
+        transaksiPersediaanDetail: {
           select: { qtyDipakai: true, hargaSaatPakai: true },
         },
       },
@@ -31,11 +31,11 @@ export async function GET(request: NextRequest) {
 
     const rekap = batches.map((b) => {
       const nilaiMasuk = Number(b.hargaSatuan) * b.qtyMasuk;
-      const totalQtyKeluar = b.transaksiAtkDetail.reduce(
+      const totalQtyKeluar = b.transaksiPersediaanDetail.reduce(
         (sum, d) => sum + d.qtyDipakai,
         0
       );
-      const totalNilaiKeluar = b.transaksiAtkDetail.reduce(
+      const totalNilaiKeluar = b.transaksiPersediaanDetail.reduce(
         (sum, d) => sum + Number(d.hargaSaatPakai) * d.qtyDipakai,
         0
       );
@@ -58,9 +58,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: rekap });
   } catch (error) {
-    console.error("GET /api/laporan/rekap-atk error:", error);
+    console.error("GET /api/laporan/rekap-persediaan error:", error);
     return NextResponse.json(
-      { success: false, error: "Gagal mengambil rekap ATK." },
+      { success: false, error: "Gagal mengambil rekap Persediaan." },
       { status: 500 }
     );
   }

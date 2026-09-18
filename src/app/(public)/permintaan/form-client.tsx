@@ -282,7 +282,7 @@ export default function PermintaanForm({ barangList = [], pegawaiList = [] }: Fo
 
     setIsFetchingStock((prev) => ({ ...prev, [barangId]: true }));
     try {
-      const res = await fetch(`/api/atk/${barangId}`);
+      const res = await fetch(`/api/persediaan/${barangId}`);
       const json = await res.json();
       if (json.success) {
         setRealtimeStock((prev) => ({ ...prev, [barangId]: json.data.stok }));
@@ -362,7 +362,7 @@ export default function PermintaanForm({ barangList = [], pegawaiList = [] }: Fo
         payload.unitKerja = unitKerja;
       }
 
-      const res = await fetch("/api/transaksi-atk", {
+      const res = await fetch("/api/transaksi-persediaan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

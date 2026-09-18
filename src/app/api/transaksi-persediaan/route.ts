@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { buildTransaksiAtkFilter } from "./_lib/filter";
+import { buildTransaksiPersediaanFilter } from "./_lib/filter";
 
 // ─── Interfaces ──────────────────────────────────────────────
 interface SelectedItem {
@@ -9,7 +9,7 @@ interface SelectedItem {
   quantity: number;
 }
 
-interface TransaksiAtkRequest {
+interface TransaksiPersediaanRequest {
   pegawaiId?: string;
   namaPegawai?: string;
   unitKerja?: string;
@@ -32,12 +32,12 @@ interface BatchRow {
   harga_satuan: Prisma.Decimal;
 }
 
-// ─── POST /api/transaksi-atk ─────────────────────────────────
-// Submit permintaan ATK — FIFO, atomic, tanpa proses approval.
+// ─── POST /api/transaksi-persediaan ─────────────────────────────────
+// Submit permintaan Persediaan — FIFO, atomic, tanpa proses approval.
 // Stok fisik langsung dipotong saat submit sukses.
 export async function POST(request: NextRequest) {
   try {
-    const body: TransaksiAtkRequest = await request.json();
+    const body: TransaksiPersediaanRequest = await request.json();
     const { pegawaiId, namaPegawai, unitKerja, items } = body;
 
     // ── Validasi input dasar ──────────────────────────────
@@ -184,8 +184,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // ── 3. Buat record TransaksiAtk dengan resolvedPegawaiId ──
-        const transaksi = await tx.transaksiAtk.create({
+        // ── 3. Buat record TransaksiPersediaan dengan resolvedPegawaiId ──
+        const transaksi = await tx.transaksiPersediaan.create({
           data: {
             masterBarangId: item.barangId,
             pegawaiId: resolvedPegawaiId!,
@@ -219,9 +219,9 @@ export async function POST(request: NextRequest) {
           }
 
           // ── 5. Catat detail transaksi FIFO ──
-          const detail = await tx.transaksiAtkDetail.create({
+          const detail = await tx.transaksiPersediaanDetail.create({
             data: {
-              transaksiAtkId: transaksi.id,
+              transaksiPersediaanId: transaksi.id,
               batchSuratBelanjaId: batch.id,
               qtyDipakai: dipakai,
               hargaSaatPakai: batch.harga_satuan,
@@ -265,8 +265,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const message = error instanceof Error ? error.message : "Gagal menyimpan transaksi ATK.";
-    console.error("POST /api/transaksi-atk error:", error);
+    const message = error instanceof Error ? error.message : "Gagal menyimpan transaksi Persediaan.";
+    console.error("POST /api/transaksi-persediaan error:", error);
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }
@@ -274,8 +274,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ─── GET /api/transaksi-atk ──────────────────────────────────
-// Ambil daftar transaksi ATK dengan pagination, filter, dan export Excel
+// ─── GET /api/transaksi-persediaan ──────────────────────────────────
+// Ambil daftar transaksi Persediaan dengan pagination, filter, dan export Excel
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -288,7 +288,7 @@ export async function GET(request: NextRequest) {
     const isExport = searchParams.get("export") === "excel";
 
     // ── Build filter where clause ──
-    const where: Prisma.TransaksiAtkWhereInput = {};
+    const where: Prisma.TransaksiPersediaanWhereInput = {};
 
     if (namaPegawai || unitKerja) {
       where.pegawai = {};
@@ -312,7 +312,7 @@ export async function GET(request: NextRequest) {
 
     // ── Group transaksi by pegawaiId + tanggal ──
     if (isExport) {
-      const allTransaksi = await prisma.transaksiAtk.findMany({
+      const allTransaksi = await prisma.transaksiPersediaan.findMany({
         where,
         include: {
           masterBarang: { select: { namaBarang: true, satuan: true } },
@@ -340,13 +340,13 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": `attachment; filename="riwayat-atk-${new Date().toISOString().slice(0, 10)}.csv"`,
+          "Content-Disposition": `attachment; filename="riwayat-persediaan-${new Date().toISOString().slice(0, 10)}.csv"`,
         },
       });
     }
 
     // ── Regular paginated response ──
-    const allTransaksi = await prisma.transaksiAtk.findMany({
+    const allTransaksi = await prisma.transaksiPersediaan.findMany({
       where,
       include: {
         masterBarang: { select: { namaBarang: true, satuan: true } },
@@ -361,7 +361,7 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const totalBulanIni = await prisma.transaksiAtk.count({
+    const totalBulanIni = await prisma.transaksiPersediaan.count({
       where: { tanggalPengambilan: { gte: startOfMonth } },
     });
 
@@ -377,15 +377,15 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("GET /api/transaksi-atk error:", error);
+    console.error("GET /api/transaksi-persediaan error:", error);
     return NextResponse.json(
-      { success: false, error: "Gagal mengambil data transaksi ATK." },
+      { success: false, error: "Gagal mengambil data transaksi Persediaan." },
       { status: 500 }
     );
   }
 }
 
-// ─── Helper: group individual TransaksiAtk rows into submission groups ───
+// ─── Helper: group individual TransaksiPersediaan rows into submission groups ───
 function groupTransaksi(transaksiList: any[]) {
   const map = new Map<string, any>();
 

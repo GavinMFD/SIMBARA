@@ -98,13 +98,13 @@ model Pegawai {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  transaksiAtk TransaksiAtk[]
+  transaksiPersediaan TransaksiPersediaan[]
 
   @@map("pegawai")
 }
 
 // ------------------------------------------------------------
-// 2. MODUL PERSEDIAAN (ATK) — FIFO
+// 2. MODUL PERSEDIAAN (Persediaan) — FIFO
 // ------------------------------------------------------------
 
 model KategoriBarang {
@@ -129,7 +129,7 @@ model MasterBarang {
 
   kategori          KategoriBarang      @relation(fields: [kategoriBarangId], references: [id])
   batchSuratBelanja BatchSuratBelanja[]
-  transaksiAtk      TransaksiAtk[]
+  transaksiPersediaan      TransaksiPersediaan[]
 
   @@map("master_barang")
 }
@@ -147,12 +147,12 @@ model BatchSuratBelanja {
 
   masterBarang       MasterBarang         @relation(fields: [masterBarangId], references: [id])
   pencatat           User                 @relation(fields: [dicatatOleh], references: [id])
-  transaksiAtkDetail TransaksiAtkDetail[]
+  transaksiPersediaanDetail TransaksiPersediaanDetail[]
 
   @@map("batch_surat_belanja")
 }
 
-model TransaksiAtk {
+model TransaksiPersediaan {
   id                 String   @id @default(uuid())
   masterBarangId     String   @map("master_barang_id")
   pegawaiId          String   @map("pegawai_id") 
@@ -161,23 +161,23 @@ model TransaksiAtk {
 
   masterBarang MasterBarang         @relation(fields: [masterBarangId], references: [id])
   pegawai      Pegawai              @relation(fields: [pegawaiId], references: [id])
-  detail       TransaksiAtkDetail[]
+  detail       TransaksiPersediaanDetail[]
 
-  @@map("transaksi_atk")
+  @@map("transaksi_persediaan")
 }
 
 // Rincian FIFO: 1 transaksi bisa dipenuhi dari lebih dari 1 batch surat belanja
-model TransaksiAtkDetail {
+model TransaksiPersediaanDetail {
   id                  String  @id @default(uuid())
-  transaksiAtkId      String  @map("transaksi_atk_id")
+  transaksiPersediaanId      String  @map("transaksi_persediaan_id")
   batchSuratBelanjaId String  @map("batch_surat_belanja_id")
   qtyDipakai          Int     @map("qty_dipakai")
   hargaSaatPakai      Decimal @map("harga_saat_pakai") @db.Decimal(14, 2)
 
-  transaksiAtk      TransaksiAtk      @relation(fields: [transaksiAtkId], references: [id])
+  transaksiPersediaan      TransaksiPersediaan      @relation(fields: [transaksiPersediaanId], references: [id])
   batchSuratBelanja BatchSuratBelanja @relation(fields: [batchSuratBelanjaId], references: [id])
 
-  @@map("transaksi_atk_detail")
+  @@map("transaksi_persediaan_detail")
 }
 
 // ------------------------------------------------------------

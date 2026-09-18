@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest, props: RouteParams) {
     if (!auth.isAuthorized) return auth.errorResponse!;
 
     // Cek apakah pegawai sudah dipakai di transaksi
-    const relatedTx = await prisma.transaksiAtk.findFirst({
+    const relatedTx = await prisma.transaksiPersediaan.findFirst({
       where: { pegawaiId: params.id },
     });
 
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, props: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: "Pegawai tidak dapat dihapus karena sudah memiliki riwayat transaksi pengambilan ATK. Nonaktifkan status jika sudah tidak aktif.",
+          error: "Pegawai tidak dapat dihapus karena sudah memiliki riwayat transaksi pengambilan Persediaan. Nonaktifkan status jika sudah tidak aktif.",
         },
         { status: 400 }
       );

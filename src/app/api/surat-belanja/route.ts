@@ -3,8 +3,8 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 interface ItemSuratBelanja {
-  type: "atk" | "aset";
-  // For ATK
+  type: "persediaan" | "aset";
+  // For Persediaan
   masterBarangId?: string;
   // For Aset
   kategoriAsetId?: string;
@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
       }
 
       for (const item of items) {
-        if (item.type === "atk") {
-          if (!item.masterBarangId) throw new Error("Barang ATK harus dipilih.");
+        if (item.type === "persediaan") {
+          if (!item.masterBarangId) throw new Error("Barang Persediaan harus dipilih.");
           
           await tx.batchSuratBelanja.create({
             data: {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
           });
           atkBatchesCreated++;
 
-          // Update stok master barang ATK
+          // Update stok master barang Persediaan
           const stokResult = await tx.batchSuratBelanja.aggregate({
             _sum: { sisaQty: true },
             where: { masterBarangId: item.masterBarangId },
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         data: results,
-        message: `Berhasil mencatat Surat Belanja ${noSuratBelanja} (${results.atkBatchesCreated} batch ATK, ${results.asetBatchesCreated} batch Aset).`,
+        message: `Berhasil mencatat Surat Belanja ${noSuratBelanja} (${results.atkBatchesCreated} batch Persediaan, ${results.asetBatchesCreated} batch Aset).`,
       },
       { status: 201 }
     );
