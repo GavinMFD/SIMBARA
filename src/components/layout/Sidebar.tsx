@@ -68,6 +68,7 @@ export default function Sidebar({ user }: { user?: any }) {
     });
   };
 
+  return (
     <>
       {/* Mobile Overlay */}
       {mobileOpen && (

@@ -183,7 +183,7 @@ function PegawaiAutocomplete({
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="Ketik nama Anda..."
-          className="w-full pl-11 pr-4 py-3.5 bg-[#0a2240] border border-[#143550] rounded-xl text-slate-200 focus:border-blue-500 outline-none placeholder:text-slate-500 transition-all text-sm font-medium"
+          className={`w-full pl-11 py-3.5 bg-[#0a2240] border border-[#143550] rounded-xl text-slate-200 focus:border-blue-500 outline-none placeholder:text-slate-500 transition-all text-sm font-medium ${typedName ? 'pr-28' : 'pr-4'}`}
         />
         {typedName && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
@@ -459,12 +459,13 @@ export default function PermintaanForm({ barangList = [], pegawaiList = [] }: Fo
         </Link>
         
         <div className="h-20 w-20 mb-6 rounded-full bg-gradient-to-tr from-blue-600 to-emerald-500 p-0.5 shadow-xl shadow-blue-500/20 relative">
-          <div className="w-full h-full bg-[#0a2240] rounded-full flex items-center justify-center relative overflow-hidden">
+          <div className="w-full h-full bg-[#0a2240] rounded-full flex items-center justify-center overflow-hidden">
             <Image
               src="/logo-sipandai.png"
               alt="Logo SIPANDAI"
-              fill
-              className="object-contain p-3"
+              width={48}
+              height={48}
+              className="object-contain"
               priority
             />
           </div>
