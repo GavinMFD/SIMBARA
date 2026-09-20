@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -44,7 +44,18 @@ const ALL_NAVIGATION = [
 export default function Sidebar({ user }: { user?: any }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const handleToggle = () => setMobileOpen((prev) => !prev);
+    window.addEventListener("toggle-mobile-sidebar", handleToggle);
+    return () => window.removeEventListener("toggle-mobile-sidebar", handleToggle);
+  }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   // Filter navigation by role
   const navigation = ALL_NAVIGATION.filter(item => 
@@ -57,12 +68,19 @@ export default function Sidebar({ user }: { user?: any }) {
     });
   };
 
-  return (
-    <aside
-      className={`flex h-screen flex-col border-r border-border bg-[#041424] text-slate-300 transition-all duration-300 print:hidden ${
-        collapsed ? "w-16" : "w-60"
-      }`}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[60] md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-[70] flex h-screen flex-col border-r border-border bg-[#041424] text-slate-300 transition-all duration-300 print:hidden md:relative md:translate-x-0 ${
+          collapsed ? "md:w-16" : "md:w-60"
+        } ${mobileOpen ? "translate-x-0 w-64" : "-translate-x-full w-64"}`}
+      >
       {/* Logo & Toggle Header */}
       <div className={`flex h-16 items-center border-b border-border px-3 ${
         collapsed ? "justify-center" : "justify-between"
@@ -88,11 +106,20 @@ export default function Sidebar({ user }: { user?: any }) {
           </div>
         )}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              setMobileOpen(false);
+            } else {
+              setCollapsed(!collapsed);
+            }
+          }}
           className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
+          <div className="md:hidden"><ChevronLeft size={18} /></div>
+          <div className="hidden md:block">
+            {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
+          </div>
         </button>
       </div>
 
@@ -222,5 +249,6 @@ export default function Sidebar({ user }: { user?: any }) {
         )}
       </div>
     </aside>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useTransition } from "react";
-import { Bell, Search, LogOut, Grid } from "lucide-react";
+import { Bell, Search, LogOut, Grid, Menu } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -24,8 +24,14 @@ export default function Navbar({ user }: { user: any }) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-[#030d1a] px-5 print:hidden">
       {/* Left: Branding or empty space */}
-      <div className="relative flex items-center">
-        {/* Removed search bar */}
+      <div className="relative flex items-center gap-3">
+        <button 
+          className="md:hidden rounded-lg p-2 text-slate-400 hover:bg-slate-850 hover:text-white transition-colors"
+          onClick={() => window.dispatchEvent(new Event('toggle-mobile-sidebar'))}
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </button>
       </div>
 
       {/* Right: Actions & User */}
