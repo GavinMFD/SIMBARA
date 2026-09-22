@@ -255,7 +255,7 @@ export default function StokMasukPage() {
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Stok Masuk</p>
           <h1 className="text-2xl font-bold text-white">Pencatatan Stok Masuk</h1>
@@ -274,9 +274,9 @@ export default function StokMasukPage() {
 
       {/* ── Filter Card ─────────────────────────────────── */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5">
-        <div className="flex flex-nowrap gap-3 items-end overflow-x-auto">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-end w-full">
           {/* Search */}
-          <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex-1 w-full sm:w-auto min-w-0 space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cari</label>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />

@@ -288,7 +288,7 @@ export default function DetailAsetPage({
       </div>
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 font-medium mb-1 print:hidden">
             <Link href="/barang" className="hover:text-slate-300 transition-colors">Aset Tetap</Link> &rsaquo; Detail Unit

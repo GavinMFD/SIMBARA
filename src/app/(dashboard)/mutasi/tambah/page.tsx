@@ -204,7 +204,7 @@ export default function TambahMutasiPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 font-medium mb-1">
             <Link href="/mutasi" className="hover:text-slate-300 transition-colors">Mutasi</Link> &rsaquo; Tambah

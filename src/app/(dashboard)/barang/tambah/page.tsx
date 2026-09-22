@@ -453,7 +453,7 @@ export default function TambahAsetPage() {
               <button
                 onClick={handleGoToStep2}
                 disabled={isLoadingOptions}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0 whitespace-nowrap"
               >
                 Lanjut ke Detail Unit
                 <ArrowRight size={14} />

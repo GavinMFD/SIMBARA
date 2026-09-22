@@ -88,7 +88,7 @@ export default function DashboardPage() {
           <div className="h-8 w-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
             <AlertTriangle className="text-red-500" size={16} />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 w-full sm:w-auto min-w-0">
             <h3 className="text-red-500 font-bold text-sm mb-1">
               PERHATIAN: {lowStockItems.length} Barang Mencapai Batas Minimum Stok
             </h3>
@@ -339,7 +339,7 @@ export default function DashboardPage() {
               <div className="h-8 w-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
                 <Package size={16} />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 w-full sm:w-auto min-w-0">
                 <p className="text-xs font-bold text-white truncate">Pembelian Kertas HVS</p>
                 <p className="text-[10px] text-slate-500">24 Jan • 10:30 AM</p>
               </div>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
               <div className="h-8 w-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
                 <Truck size={16} />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 w-full sm:w-auto min-w-0">
                 <p className="text-xs font-bold text-white truncate">Distribusi Bidang Sosial</p>
                 <p className="text-[10px] text-slate-500">23 Jan • 08:15 PM</p>
               </div>
@@ -361,7 +361,7 @@ export default function DashboardPage() {
               <div className="h-8 w-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
                 <Laptop size={16} />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 w-full sm:w-auto min-w-0">
                 <p className="text-xs font-bold text-white truncate">Laptop Dell Latitude</p>
                 <p className="text-[10px] text-slate-500">22 Jan • 04:20 PM</p>
               </div>

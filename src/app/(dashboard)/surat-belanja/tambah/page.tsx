@@ -232,7 +232,7 @@ export default function TambahSuratBelanjaPage() {
               <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
               Daftar Barang (Rincian)
             </h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => addItem("persediaan")}
@@ -336,7 +336,7 @@ export default function TambahSuratBelanjaPage() {
                       </div>
                       <div className="md:col-span-4 space-y-1.5">
                         <label className="text-[11px] font-semibold text-slate-400 uppercase">Nama & Merek</label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                           <input
                             type="text"
                             value={item.namaAset || ""}
@@ -430,7 +430,7 @@ export default function TambahSuratBelanjaPage() {
             <button
               type="submit"
               disabled={isSubmitting || isLoadingData}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0 whitespace-nowrap"
             >
               {isSubmitting ? (
                 <>

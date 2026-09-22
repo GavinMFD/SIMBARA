@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/app/(auth)/login/actions";
+import Link from "next/link";
 
 export default function Navbar({ user }: { user: any }) {
   const [isPending, startTransition] = useTransition();
@@ -83,12 +84,16 @@ export default function Navbar({ user }: { user: any }) {
                 </p>
               </div>
               <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="focus:bg-[#0f2b48] focus:text-white cursor-pointer">
-                Profil Saya
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#0f2b48] focus:text-white cursor-pointer">
-                Pengaturan
-              </DropdownMenuItem>
+              <Link href="/pengaturan" className="outline-none">
+                <DropdownMenuItem className="focus:bg-[#0f2b48] focus:text-white cursor-pointer">
+                  Profil Saya
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/pengaturan" className="outline-none">
+                <DropdownMenuItem className="focus:bg-[#0f2b48] focus:text-white cursor-pointer">
+                  Pengaturan
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
                 className="text-red-400 focus:bg-red-950/20 focus:text-red-450 cursor-pointer"

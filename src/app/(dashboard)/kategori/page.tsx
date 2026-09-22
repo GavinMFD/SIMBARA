@@ -171,7 +171,7 @@ export default function UnifiedKategoriPage() {
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Kategori</p>
           <h1 className="text-2xl font-bold text-white">Master Kategori</h1>
@@ -181,7 +181,7 @@ export default function UnifiedKategoriPage() {
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0 whitespace-nowrap"
         >
           <Plus size={16} />
           Tambah Kategori
@@ -189,7 +189,7 @@ export default function UnifiedKategoriPage() {
       </div>
 
       {/* ── Tabs ──────────────────────────────────────── */}
-      <div className="flex border-b border-[#0f2b48]">
+      <div className="flex border-b border-[#0f2b48] overflow-x-auto whitespace-nowrap hide-scrollbar">
         <button
           onClick={() => { setActiveTab("aset"); setSearch(""); }}
           className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-all ${
@@ -212,8 +212,8 @@ export default function UnifiedKategoriPage() {
 
       {/* ── Search ──────────────────────────────────────── */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-end w-full">
+          <div className="flex-1 w-full sm:w-auto min-w-0 space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Cari Kategori {activeTab === "aset" ? "Aset" : "Persediaan"}
             </label>
@@ -375,7 +375,7 @@ export default function UnifiedKategoriPage() {
                 <button type="button" onClick={closeModal} className="px-5 py-2.5 rounded-xl bg-[#0a2240] border border-[#143550] text-sm text-slate-400 hover:text-white transition-colors font-semibold">
                   Batal
                 </button>
-                <button type="submit" disabled={isSaving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all">
+                <button type="submit" disabled={isSaving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0 whitespace-nowrap">
                   {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                   Simpan Kategori
                 </button>

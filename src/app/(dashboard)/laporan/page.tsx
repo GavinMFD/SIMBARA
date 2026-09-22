@@ -252,7 +252,7 @@ export default function LaporanPage() {
         </div>
 
         <div className="p-6">
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-end gap-4 w-full">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Periode Bulan
@@ -297,7 +297,7 @@ export default function LaporanPage() {
         </div>
 
         <div className="p-6">
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-end gap-4 w-full">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Dari Tanggal

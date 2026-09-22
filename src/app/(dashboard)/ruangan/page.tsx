@@ -183,7 +183,7 @@ export default function RuanganPage() {
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 font-medium mb-1">
             Dashboard &rsaquo; Master Data
@@ -195,7 +195,7 @@ export default function RuanganPage() {
         </div>
         <button
           onClick={openAddDialog}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff7e47] hover:bg-[#e06833] text-white text-sm font-semibold shadow-lg shadow-[#ff7e47]/25 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff7e47] hover:bg-[#e06833] text-white text-sm font-semibold shadow-lg shadow-[#ff7e47]/25 transition-all shrink-0 whitespace-nowrap"
         >
           <Plus size={16} />
           Tambah Ruangan
@@ -204,8 +204,8 @@ export default function RuanganPage() {
 
       {/* ── Search Bar ────────────────────────────────────── */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5">
-        <div className="flex flex-nowrap gap-3 items-end">
-          <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-end w-full">
+          <div className="flex-1 w-full sm:w-auto min-w-0 space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Cari Ruangan
             </label>

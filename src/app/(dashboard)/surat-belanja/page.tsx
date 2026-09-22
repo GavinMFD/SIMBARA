@@ -64,7 +64,7 @@ export default function SuratBelanjaPage() {
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 font-medium mb-1">Dashboard &rsaquo; Surat Belanja</p>
           <h1 className="text-2xl font-bold text-white">Riwayat Penerimaan</h1>
@@ -74,7 +74,7 @@ export default function SuratBelanjaPage() {
         </div>
         <Link
           href="/surat-belanja/tambah"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0 whitespace-nowrap"
         >
           <Plus size={16} />
           Input Surat Belanja
@@ -83,8 +83,8 @@ export default function SuratBelanjaPage() {
 
       {/* ── Search ──────────────────────────────────────── */}
       <div className="rounded-2xl bg-[#071a2e] border border-[#0f2b48] p-5">
-        <form onSubmit={handleSearchSubmit} className="flex gap-3 items-end">
-          <div className="flex-1 min-w-0 space-y-1.5">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-end w-full">
+          <div className="flex-1 w-full sm:w-auto min-w-0 space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cari No. Dokumen</label>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
